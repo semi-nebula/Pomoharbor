@@ -884,12 +884,7 @@
             const mascotBtn = document.getElementById('mascot-btn');
             
             mascotBtn.addEventListener('mousedown', dragStart);
-            document.addEventListener('mousemove', drag);
-            document.addEventListener('mouseup', dragEnd);
-
             mascotBtn.addEventListener('touchstart', dragStart, {passive: false});
-            document.addEventListener('touchmove', drag, {passive: false});
-            document.addEventListener('touchend', dragEnd);
 
             function dragStart(e) {
                 if (e.type === 'touchstart') {
@@ -911,6 +906,18 @@
 
                 isDraggingMascot = true;
                 isMascotClick = true;
+
+                // Attached only for the duration of this drag, not for the
+                // whole page session. A touchmove listener with
+                // {passive:false} makes the browser wait for this JS to run
+                // before it's allowed to scroll - fine for the split-second
+                // the mascot is actually being dragged, but very costly for
+                // mobile scroll smoothness if left bound permanently, since
+                // it would gate every touch-scroll anywhere on the page.
+                document.addEventListener('mousemove', drag);
+                document.addEventListener('touchmove', drag, {passive: false});
+                document.addEventListener('mouseup', dragEnd);
+                document.addEventListener('touchend', dragEnd);
             }
 
             function drag(e) {
@@ -938,6 +945,10 @@
 
             function dragEnd(e) {
                 isDraggingMascot = false;
+                document.removeEventListener('mousemove', drag);
+                document.removeEventListener('touchmove', drag);
+                document.removeEventListener('mouseup', dragEnd);
+                document.removeEventListener('touchend', dragEnd);
             }
         });
 
@@ -1387,8 +1398,8 @@
         // images can be large and are per-device by design).
         // ============================================================
         const MAX_CUSTOM_BGS = 4;
-        const CUSTOM_BG_MAX_DIMENSION = 1280; // longest side, px - keeps storage + decode cost low
-        const CUSTOM_BG_JPEG_QUALITY = 0.72;
+        const CUSTOM_BG_MAX_DIMENSION = 960; // longest side, px - lower cuts GPU blur cost noticeably, no visible quality loss behind blurred glass cards
+        const CUSTOM_BG_JPEG_QUALITY = 0.7;
 
         let customBgs = JSON.parse(localStorage.getItem(roomKey('pomoharbor_custom_bgs'))) || [];
         let activeCustomBgId = localStorage.getItem(roomKey('pomoharbor_active_bg')) || '';
@@ -1552,6 +1563,14 @@
             document.body.style.backgroundSize = 'auto, auto, cover, cover';
             document.body.style.backgroundPosition = 'center, center, center, center';
             document.body.style.backgroundRepeat = 'no-repeat, no-repeat, no-repeat, no-repeat';
+            // "fixed" attachment (the default, for the cheap plain-gradient
+            // look) forces every glass/blur panel to re-sample and re-blur
+            // this layer on every single scroll frame. Fine for a flat
+            // gradient, expensive for a detailed photo. "scroll" lets the
+            // browser treat it like normal page content instead - the photo
+            // still fills the screen the same way, it just isn't
+            // recomputed 60x/sec while scrolling.
+            document.body.style.backgroundAttachment = 'scroll';
         }
 
         function clearBodyBackgroundImage() {
@@ -1567,6 +1586,7 @@
             document.body.style.backgroundSize = '';
             document.body.style.backgroundPosition = '';
             document.body.style.backgroundRepeat = '';
+            document.body.style.backgroundAttachment = ''; // back to the cheap default (fixed gradient, no photo)
         }
 
         // Single source of truth for "what should the body background look
