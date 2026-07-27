@@ -195,6 +195,27 @@
             .custom-nav { backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
         }
 
+        /* backdrop-filter isn't a one-time paint - the browser has to keep
+           re-sampling and re-blurring whatever's behind each card on every
+           single frame while it moves, because scrolling constantly changes
+           what's "behind" it. That's true no matter how well the rest of the
+           page is optimized, and it's the main reason scrolling specifically
+           (as opposed to tapping buttons) felt heavy on mobile. While a
+           scroll is actively happening, the class below swaps every blurred
+           surface to a plain solid-ish fill instead - cheap to composite,
+           no resampling needed - and a slightly-raised opacity keeps it
+           readable without the blur behind it. The instant scrolling stops,
+           the frosted-glass look comes right back (see the scroll listener
+           near the bottom of the script), so nothing about the resting
+           look/feel changes - only the ~150ms right after a fling. */
+        html.is-scrolling .glass-panel,
+        html.is-scrolling .custom-card,
+        html.is-scrolling .custom-nav {
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            background-color: var(--bg-card) !important;
+        }
+
         .accent-text { color: var(--accent-primary); }
         .text-muted-custom { color: var(--text-muted); }
         
@@ -807,8 +828,20 @@
                 </button>
             </div>
             <div class="flowtunes-frame-wrapper custom-card rounded-3xl overflow-hidden border shadow-2xl h-[calc(100vh-13rem)] sm:h-[calc(100vh-16rem)] w-full relative">
+                <!-- src intentionally left unset here - a full third-party web
+                     app (with its own JS, audio, animations) was previously
+                     loaded into this iframe on every page load, regardless of
+                     whether the user ever opened this tab. That meant it sat
+                     running in the background - burning CPU/GPU/battery on
+                     every device, forever - for people who never even used
+                     Flowtunes. switchTab() now sets data-src -> src the first
+                     time this tab is actually opened, so it loads on demand.
+                     Once loaded it stays mounted (just hidden) so playback
+                     keeps going if the user switches to another tab -
+                     identical behavior to before, just no longer front-loaded. -->
                 <iframe 
-                    src="https://flowtunes.app" 
+                    id="flowtunes-iframe"
+                    data-src="https://flowtunes.app" 
                     class="w-full h-full border-0 rounded-3xl"
                     allow="autoplay; encrypted-media"
                     title="Flowtunes Station">
@@ -1097,8 +1130,7 @@
                 return;
             }
 
-            quickLinks.forEach((link, idx) => {
-                const itemHTML = `
+            listEl.innerHTML = quickLinks.map((link, idx) => `
                     <div class="flex items-center justify-between p-2 rounded-xl hover:bg-white/10 transition group">
                         <a href="${link.url}" target="_blank" rel="noopener noreferrer" class="text-xs font-semibold text-slate-200 hover:text-white truncate flex-1 flex items-center gap-2">
                             <span class="text-[10px] text-muted-custom font-mono">#${idx+1}</span>
@@ -1106,9 +1138,7 @@
                         </a>
                         <button onclick="deleteQuickLink(${link.id})" class="text-[11px] opacity-40 group-hover:opacity-100 hover:text-red-400 p-1 transition" title="Delete link">🗑️</button>
                     </div>
-                `;
-                listEl.innerHTML += itemHTML;
-            });
+                `).join('');
         }
 
         function showAddLinkForm() {
@@ -1858,14 +1888,14 @@
                 return;
             }
 
-            journal.slice().reverse().forEach(entry => {
+            const itemsHTML = journal.slice().reverse().map(entry => {
                 let hours = Math.floor(entry.durationMs / (1000 * 60 * 60));
                 let minutes = Math.floor((entry.durationMs % (1000 * 60 * 60)) / (1000 * 60));
                 let seconds = Math.floor((entry.durationMs % (1000 * 60)) / 1000);
 
                 let durationText = `${hours > 0 ? hours + 'h ' : ''}${minutes}m ${seconds}s`;
 
-                let itemHTML = `
+                return `
                     <div class="flex flex-wrap justify-between items-center gap-2.5 p-4 sm:p-4.5 bg-white/5 rounded-2xl border border-white/5 hover:border-white/10 transition">
                         <div>
                             <span class="text-[11px] sm:text-xs font-bold px-2 py-0.5 rounded-lg bg-white/10 text-slate-300 mr-2 uppercase tracking-wider">[${entry.category}]</span>
@@ -1877,8 +1907,8 @@
                         </div>
                     </div>
                 `;
-                journalContainer.innerHTML += itemHTML;
-            });
+            }).join('');
+            journalContainer.innerHTML = itemsHTML;
         }
 
         const EIGHT_HOURS_MS = 8 * 60 * 60 * 1000;
@@ -1976,6 +2006,13 @@
             if (currentTab === tab) return;
 
             currentTab = tab;
+
+            if (tab === 'flowtunes') {
+                const ftFrame = document.getElementById('flowtunes-iframe');
+                if (ftFrame && !ftFrame.src && ftFrame.dataset.src) {
+                    ftFrame.src = ftFrame.dataset.src;
+                }
+            }
             ['stopwatch', 'timer', 'pomodoro', 'journal', 'flowtunes'].forEach(t => {
                 const el = document.getElementById(`tab-${t}`);
                 if (el) el.className = t === tab ? "px-2.5 sm:px-4 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl transition-all tab-glow accent-text tab-active whitespace-nowrap" : "px-2.5 sm:px-4 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl transition-all tab-glow text-muted-custom whitespace-nowrap";
@@ -2118,7 +2155,7 @@
                     timer.running = true;
                     if (!timers.some(t => t.finished)) stopAlarmLoop();
                 }
-                render();
+                patchTimerCard(id);
                 save();
             }
         }
@@ -2130,7 +2167,7 @@
                 if (!timer.laps) timer.laps = [];
                 const splitNum = timer.laps.length + 1;
                 timer.laps.unshift({ id: Date.now(), name: `Split #${splitNum}`, time: currentElapsed });
-                render();
+                patchTimerCard(id);
                 save();
             }
         }
@@ -2156,7 +2193,7 @@
                 timer.nudge8hShown = false;
                 timer.nudge12hShown = false;
                 if (!timers.some(t => t.finished)) stopAlarmLoop();
-                render();
+                patchTimerCard(id);
                 save();
             }
         }
@@ -2324,16 +2361,24 @@
             }
             emptyState.classList.add('hidden');
 
+            grid.innerHTML = activeItems.map(timerCardHTML).join('');
+        }
+
+        // Same markup render() always used inline in its .map() call, just
+        // pulled out so a single card can be regenerated and swapped in
+        // place (see patchTimerCard) without rebuilding every other card -
+        // and therefore without re-triggering their backdrop-filter blur
+        // layers - just to reflect one timer's start/pause/reset/split.
+        function timerCardHTML(timer) {
             const fontClass = userSettings.fontStyle === 'digital' ? 'digital-font' : 'mono';
             const cardPadding = userSettings.compactView ? 'p-4 sm:p-5' : 'p-5 sm:p-7';
 
-            grid.innerHTML = activeItems.map(timer => {
-                let displayTime = calculateDisplayTime(timer);
+            let displayTime = calculateDisplayTime(timer);
                 let isEditing = editingTimerId === timer.id;
                 let { h, m, s } = getHMS(timer.durationMs);
 
                 return `
-                    <div class="custom-card ${timer.finished ? 'timer-finished' : ''} rounded-3xl ${cardPadding} flex flex-col justify-between relative overflow-hidden">
+                    <div data-timer-id="${timer.id}" class="custom-card ${timer.finished ? 'timer-finished' : ''} rounded-3xl ${cardPadding} flex flex-col justify-between relative overflow-hidden">
                         <div>
                             <div class="flex justify-between items-center mb-3">
                                 <div class="flex items-center space-x-2 w-8/12 group">
@@ -2398,7 +2443,24 @@
                         </div>
                     </div>
                 `;
-            }).join('');
+        }
+
+        // Regenerates and swaps in just one timer's card - used by the
+        // high-frequency per-timer actions (start/pause, reset, split) so
+        // clicking one card doesn't force every other card on screen to
+        // repaint its blur/shadow layers too. Falls back to a full render()
+        // if the card isn't currently in the DOM (e.g. its tab isn't the
+        // active one - shouldn't normally happen since the click came from
+        // a visible card, but this keeps it safe either way).
+        function patchTimerCard(id) {
+            const timer = timers.find(t => t.id === id);
+            const el = document.querySelector(`[data-timer-id="${id}"]`);
+            if (!timer || !el) { render(); return; }
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = timerCardHTML(timer).trim();
+            const newEl = wrapper.firstElementChild;
+            if (newEl) el.replaceWith(newEl);
+            else render();
         }
 
         // ============================================================
@@ -2641,6 +2703,24 @@
 
         // Always runs, regardless of whether Cloud Sync above succeeded.
         render();
+
+        // See the .is-scrolling CSS rule near the top of the stylesheet -
+        // this is the other half of it. Passive (never blocks the scroll
+        // itself) and does the absolute minimum on every event: one
+        // classList check + a timer reset. The 150ms of "still scrolling"
+        // after the last event covers the natural pause between a fling
+        // and the page settling, without leaving the blur off noticeably
+        // longer than the scroll gesture itself.
+        let scrollEndTimer = null;
+        window.addEventListener('scroll', () => {
+            if (!document.documentElement.classList.contains('is-scrolling')) {
+                document.documentElement.classList.add('is-scrolling');
+            }
+            clearTimeout(scrollEndTimer);
+            scrollEndTimer = setTimeout(() => {
+                document.documentElement.classList.remove('is-scrolling');
+            }, 150);
+        }, { passive: true });
     </script>
 </body>
 </html>
