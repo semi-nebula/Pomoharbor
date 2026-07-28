@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>To-Do List | PomoHarbor</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,400;0,600;0,800;1,400&display=swap" rel="stylesheet">
@@ -141,8 +144,8 @@
 </head>
 <body>
     <header class="border-b custom-nav sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
-            <h1 class="text-base sm:text-xl font-extrabold accent-text tracking-tight flex items-center gap-1.5 sm:gap-2 shrink-0 leading-none">
+        <div class="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 h-16 flex items-center justify-between gap-1 sm:gap-2">
+            <h1 class="text-base sm:text-xl font-extrabold accent-text tracking-tight flex items-center gap-1 sm:gap-1.5 shrink-0 leading-none">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="shrink-0 sm:w-7 sm:h-7">
                   <path d="M4 4L8 8H16L20 4V16C20 18.2 18.2 20 16 20H8C5.8 20 4 18.2 4 16V4Z" fill="#0F172A" stroke="#A855F7" stroke-width="1.5"/>
                   <rect x="7" y="10" width="3" height="3" fill="#A855F7"/>
@@ -218,7 +221,7 @@
         function roomKey(baseKey) { return baseKey + '__' + ROOM_ID; }
 
         function goToDashboard() {
-            window.location.href = 'index.html' + window.location.hash;
+            window.location.href = 'index.html?t=' + Date.now() + window.location.hash;
         }
 
         // ---- Theme: read whatever the dashboard has saved for this room
@@ -409,5 +412,15 @@
             updateSyncStatusUI('offline');
         }
     </script>
-</body>
+<script>
+        // Force a fresh load when the browser restores this page from the
+        // back-forward cache, so the user never sees an old version after
+        // returning from the to-do page.
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                window.location.reload();
+            }
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a226d7db2ce05cb8',t:'MTc4NTI3MjczOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
