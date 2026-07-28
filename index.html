@@ -213,8 +213,10 @@
             html.is-scrolling .glass-panel,
             html.is-scrolling .custom-card,
             html.is-scrolling .custom-nav {
-                backdrop-filter: none;
-                -webkit-backdrop-filter: none;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                box-shadow: none !important;
+                text-shadow: none !important;
             }
         }
         @media (max-width: 480px) {
@@ -381,6 +383,17 @@
            nothing overlaps the content. Scoped to any narrow viewport
            (<=1024px) - desktop keeps the header nav unchanged. */
         @media (max-width: 1024px) {
+            /* The header uses .custom-nav, which applies backdrop-filter and
+               transform: translateZ(0). Both of those create a containing block
+               for position:fixed children, so a fixed #main-nav-tabs would be
+               trapped inside the 64px header instead of anchoring to the
+               viewport bottom. Strip those properties in the mobile breakpoint. */
+            header.custom-nav {
+                transform: none !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                contain: none !important;
+            }
             #main-nav-tabs {
                 position: fixed !important;
                 left: 0 !important;
@@ -508,6 +521,43 @@
             #main-nav-tabs button {
                 transition: none !important;
             }
+
+            /* The radial-gradient body background is fixed by default. On
+               mobile GPUs a fixed background behind glass cards forces the
+               browser to re-sample and re-blur those layers every scroll
+               frame, which is the main source of scroll lag. Switch it to
+               scroll so the background moves with the page and is only
+               painted once. */
+            body { background-attachment: scroll !important; }
+
+            /* --- Extra "butter smooth" mobile scroll optimizations ---
+               backdrop-filter blur is by far the most expensive effect on
+               mobile GPUs. Drop it completely on narrow screens, along with
+               shadows and hover transforms. No elements are removed; the UI
+               just becomes flat/opaque instead of frosted glass. Custom
+               backgrounds set via JS (inline style) will still show. */
+            body { background-image: none; }
+            .glass-panel,
+            .custom-card,
+            .custom-nav,
+            .custom-btn {
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                box-shadow: none !important;
+            }
+            .custom-card:hover,
+            .custom-card:active {
+                transform: none !important;
+                box-shadow: none !important;
+                border-color: var(--border-color) !important;
+            }
+            .custom-btn:hover,
+            .custom-btn:active {
+                filter: none !important;
+                box-shadow: none !important;
+            }
+            * { text-shadow: none !important; }
+            * { filter: none !important; }
 
             /* 2) Remove the footer / credits line on mobile & tablet. */
             footer { display: none !important; }
@@ -1122,19 +1172,20 @@
             let scrollEndTimer = null;
             let ticking = false;
 
-            function onScrollFrame() {
-                document.documentElement.classList.add('is-scrolling');
-                clearTimeout(scrollEndTimer);
-                scrollEndTimer = setTimeout(() => {
-                    document.documentElement.classList.remove('is-scrolling');
-                }, 150);
-                ticking = false;
+            function stopScrolling() {
+                document.documentElement.classList.remove('is-scrolling');
             }
 
             scrollTarget.addEventListener('scroll', () => {
+                // Add the class immediately (not in a rAF) so the expensive
+                // blur/shadow styles are dropped before the next paint.
+                document.documentElement.classList.add('is-scrolling');
+                clearTimeout(scrollEndTimer);
+                scrollEndTimer = setTimeout(stopScrolling, 150);
+
                 if (!ticking) {
                     ticking = true;
-                    requestAnimationFrame(onScrollFrame);
+                    requestAnimationFrame(() => { ticking = false; });
                 }
             }, { passive: true });
         })();
@@ -2994,5 +3045,5 @@
         // Always runs, regardless of whether Cloud Sync above succeeded.
         render();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a22571e27990d5ee',t:'MTc4NTI1ODA3Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a225a1e2ca24897b',t:'MTc4NTI2MDA0Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a22571e27990d5ee',t:'MTc4NTI1ODA3Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
