@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>PomoHarbor | Real-Time Multi-Timer & Flowtunes</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,400;0,600;0,800;1,400&display=swap" rel="stylesheet">
@@ -296,6 +299,54 @@
             overflow: hidden !important;
         }
 
+        /* --- Social / Groups feature styles --- */
+        .profile-circle {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #fff;
+            flex-shrink: 0;
+            text-transform: uppercase;
+        }
+        .group-list-item, .friend-list-item {
+            transition: transform 0.15s ease, border-color 0.15s ease;
+        }
+        .group-list-item:active, .friend-list-item:active {
+            transform: scale(0.98);
+        }
+        .member-widget {
+            cursor: pointer;
+        }
+        .member-widget:hover {
+            border-color: var(--accent-primary);
+        }
+        .view-only-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: var(--accent-glow);
+            color: var(--accent-primary);
+            border: 1px solid var(--border-color);
+        }
+        .auth-tab-active {
+            border-bottom: 2px solid var(--accent-primary);
+            color: var(--accent-primary);
+        }
+        .auth-tab-inactive {
+            color: var(--text-muted);
+        }
+
         header {
             overflow: visible !important;
         }
@@ -495,6 +546,33 @@
                 cursor: pointer;
             }
             .quick-jump-btn:active { transform: scale(0.94); }
+
+            /* Make the bottom tab bar and quick-jump buttons solid on mobile
+               instead of translucent/glassy. */
+            #main-nav-tabs {
+                background-color: var(--bg-main) !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                box-shadow: none !important;
+            }
+            #quick-jump-bar {
+                background-color: var(--bg-main) !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                box-shadow: none !important;
+            }
+            .quick-jump-btn {
+                background-color: var(--bg-main) !important;
+                border-color: var(--border-color) !important;
+            }
+        }
+
+        /* Hide the [+] button inside the header nav on desktop — it is
+           duplicated as a standalone button in the right control cluster. */
+        @media (min-width: 1025px) {
+            #main-nav-tabs > #add-btn {
+                display: none !important;
+            }
         }
 
         /* --- MOBILE / TABLET ONLY CHANGES ---
@@ -565,9 +643,15 @@
             /* 4) Remove the interactive mascot on mobile & tablet. */
             #mascot-container { display: none !important; }
 
-            /* Keep the custom-background FAB and the toast clear of the
-               bottom tab bar so they never sit on top of it. */
-            #custom-bg-wrap { bottom: 3.5rem !important; }
+            /* 4) Remove the interactive mascot on mobile & tablet. */
+            #mascot-container { display: none !important; }
+
+            /* Custom background is now inside the Theme menu on mobile, so
+               hide the floating FAB and reclaim the space it reserved. */
+            #custom-bg-wrap { display: none !important; }
+            #quick-jump-bar { padding-right: 0.6rem !important; }
+
+            /* Keep the toast clear of the bottom tab bar. */
             #toast { bottom: 7rem !important; }
         }
     </style>
@@ -749,6 +833,72 @@
         </div>
     </div>
 
+
+    <!-- AUTH MODAL -->
+    <div id="auth-modal" onclick="closeModal('auth-modal')" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+        <div onclick="event.stopPropagation()" class="custom-card rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl transition-transform duration-300 relative border">
+            <div class="flex justify-between items-center mb-6">
+                <h3 id="auth-title" class="text-lg font-bold accent-text">Create Account</h3>
+                <button onclick="closeModal('auth-modal')" class="text-muted-custom hover:text-white font-bold text-lg">✕</button>
+            </div>
+            <div class="flex border-b border-white/10 mb-5">
+                <button id="auth-tab-signup" onclick="switchAuthTab('signup')" class="flex-1 pb-2 text-xs font-bold auth-tab-active">Sign Up</button>
+                <button id="auth-tab-login" onclick="switchAuthTab('login')" class="flex-1 pb-2 text-xs font-bold auth-tab-inactive">Log In</button>
+            </div>
+            <div id="auth-signup-form" class="space-y-4">
+                <input id="auth-name" type="text" placeholder="Your name" class="w-full custom-nav border rounded-xl px-3 py-2 text-xs outline-none text-white">
+                <input id="auth-signup-username" type="text" placeholder="Username (unique)" class="w-full custom-nav border rounded-xl px-3 py-2 text-xs outline-none text-white">
+                <input id="auth-signup-password" type="password" placeholder="Password" class="w-full custom-nav border rounded-xl px-3 py-2 text-xs outline-none text-white">
+                <input id="auth-signup-confirm" type="password" placeholder="Confirm password" class="w-full custom-nav border rounded-xl px-3 py-2 text-xs outline-none text-white">
+                <button onclick="handleSignUp()" class="w-full py-3 custom-btn text-xs uppercase tracking-wider rounded-xl font-bold">Create Account</button>
+            </div>
+            <div id="auth-login-form" class="hidden space-y-4">
+                <input id="auth-login-username" type="text" placeholder="Username" class="w-full custom-nav border rounded-xl px-3 py-2 text-xs outline-none text-white">
+                <input id="auth-login-password" type="password" placeholder="Password" class="w-full custom-nav border rounded-xl px-3 py-2 text-xs outline-none text-white">
+                <button onclick="handleLogin()" class="w-full py-3 custom-btn text-xs uppercase tracking-wider rounded-xl font-bold">Log In</button>
+            </div>
+            <p id="auth-error" class="text-[11px] text-red-400 mt-4 text-center font-semibold min-h-[1rem]"></p>
+        </div>
+    </div>
+
+    <!-- ACCOUNT DATA CONFLICT MODAL -->
+    <div id="account-data-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+        <div onclick="event.stopPropagation()" class="custom-card rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl transition-transform duration-300 relative border">
+            <h3 class="text-lg font-bold accent-text mb-2">Account data found</h3>
+            <p class="text-xs text-muted-custom mb-6">This account already has saved timers, settings, and journal from another device. Which data do you want to keep?</p>
+            <div class="flex gap-2">
+                <button onclick="resolveAccountDataConflict('local')" class="flex-1 py-3 custom-btn text-xs font-bold rounded-xl">Keep this device</button>
+                <button onclick="resolveAccountDataConflict('cloud')" class="flex-1 py-3 custom-nav border text-xs font-bold rounded-xl text-muted-custom hover:text-white">Load account data</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CREATE GROUP MODAL -->
+    <div id="create-group-modal" onclick="closeModal('create-group-modal')" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+        <div onclick="event.stopPropagation()" class="custom-card rounded-3xl max-w-md w-full p-6 shadow-2xl border">
+            <h3 class="text-base font-bold accent-text mb-4">Create Group</h3>
+            <input id="create-group-name" type="text" placeholder="Group name" class="w-full custom-nav border rounded-xl px-3 py-2 text-xs outline-none text-white mb-4">
+            <div class="flex gap-2 justify-end">
+                <button onclick="closeModal('create-group-modal')" class="px-4 py-2 custom-nav border text-[11px] rounded-xl font-bold text-muted-custom hover:text-white">Cancel</button>
+                <button onclick="handleCreateGroup()" class="px-4 py-2 custom-btn text-[11px] rounded-xl font-bold">Create</button>
+            </div>
+            <p id="create-group-error" class="text-[11px] text-red-400 mt-3 text-center font-semibold min-h-[1rem]"></p>
+        </div>
+    </div>
+
+    <!-- ADD FRIEND MODAL -->
+    <div id="add-friend-modal" onclick="closeModal('add-friend-modal')" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+        <div onclick="event.stopPropagation()" class="custom-card rounded-3xl max-w-md w-full p-6 shadow-2xl border">
+            <h3 class="text-base font-bold accent-text mb-4">Add Friend</h3>
+            <input id="add-friend-username" type="text" placeholder="Friend's username" class="w-full custom-nav border rounded-xl px-3 py-2 text-xs outline-none text-white mb-4">
+            <div class="flex gap-2 justify-end">
+                <button onclick="closeModal('add-friend-modal')" class="px-4 py-2 custom-nav border text-[11px] rounded-xl font-bold text-muted-custom hover:text-white">Cancel</button>
+                <button onclick="handleAddFriend()" class="px-4 py-2 custom-btn text-[11px] rounded-xl font-bold">Send Request</button>
+            </div>
+            <p id="add-friend-error" class="text-[11px] text-red-400 mt-3 text-center font-semibold min-h-[1rem]"></p>
+        </div>
+    </div>
+
     <!-- CUSTOM BACKGROUND MODAL -->
     <div id="custom-bg-modal" onclick="closeModal('custom-bg-modal')" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
         <div onclick="event.stopPropagation()" class="custom-card rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl transition-transform duration-300 relative border max-h-[85vh] overflow-y-auto">
@@ -771,25 +921,26 @@
 
     <!-- Header -->
     <header class="border-b custom-nav sticky top-0 z-40 shrink-0">
-        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4 overflow-visible">
-            <div class="flex items-center space-x-2 sm:space-x-4 overflow-x-auto no-scrollbar py-1 w-full justify-between sm:justify-start">
-                <h1 class="text-base sm:text-xl font-extrabold accent-text tracking-tight flex items-center gap-1.5 sm:gap-2 shrink-0 leading-none">
+        <div class="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 h-16 flex items-center justify-between gap-1 sm:gap-2 overflow-visible">
+            <div class="flex items-center space-x-1 sm:space-x-2 overflow-x-auto sm:overflow-visible no-scrollbar py-1 flex-1 min-w-0 justify-start">
+                <h1 class="text-base sm:text-xl font-extrabold accent-text tracking-tight flex items-center gap-1 sm:gap-1.5 shrink-0 leading-none">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="shrink-0 sm:w-7 sm:h-7">
                       <path d="M4 4L8 8H16L20 4V16C20 18.2 18.2 20 16 20H8C5.8 20 4 18.2 4 16V4Z" fill="#0F172A" stroke="#A855F7" stroke-width="1.5"/>
                       <rect x="7" y="10" width="3" height="3" fill="#A855F7"/>
                       <rect x="14" y="10" width="3" height="3" fill="#A855F7"/>
                       <polygon points="11,14 13,14 12,15" fill="#EC4899"/>
                     </svg>
-                    <span class="hidden sm:inline">PomoHarbor</span>
+                    <span class="hidden xl:inline">PomoHarbor</span>
                 </h1>
                 
                 <!-- ID ADDED HERE FOR THE TARGETED MEDIA QUERY -->
-                <nav id="main-nav-tabs" class="flex items-center space-x-1 custom-nav p-1 rounded-2xl border shrink-0 overflow-x-auto no-scrollbar">
-                    <button id="tab-stopwatch" onclick="switchTab('stopwatch')" class="px-2.5 sm:px-4 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl transition-all tab-glow accent-text tab-active whitespace-nowrap">⏱️ Stopwatch</button>
-                    <button id="tab-timer" onclick="switchTab('timer')" class="px-2.5 sm:px-4 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl transition-all tab-glow text-muted-custom whitespace-nowrap">⏳ Timer</button>
-                    <button id="tab-pomodoro" onclick="switchTab('pomodoro')" class="px-2.5 sm:px-4 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl transition-all tab-glow text-muted-custom whitespace-nowrap">🍅 Pomodoro</button>
-                    <button id="tab-journal" onclick="switchTab('journal')" class="px-2.5 sm:px-4 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl transition-all tab-glow text-muted-custom whitespace-nowrap">📖 Journal</button>
-                    <button id="tab-flowtunes" onclick="switchTab('flowtunes')" class="px-2.5 sm:px-4 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl transition-all tab-glow text-muted-custom whitespace-nowrap">🎵 flowtunes</button>
+                <nav id="main-nav-tabs" class="flex items-center space-x-0.5 custom-nav p-1 rounded-2xl border shrink-0 overflow-x-auto no-scrollbar">
+                    <button id="tab-stopwatch" onclick="switchTab('stopwatch')" class="px-2 sm:px-2.5 lg:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl transition-all tab-glow accent-text tab-active whitespace-nowrap">⏱️ Stopwatch</button>
+                    <button id="tab-timer" onclick="switchTab('timer')" class="px-2 sm:px-2.5 lg:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl transition-all tab-glow text-muted-custom whitespace-nowrap">⏳ Timer</button>
+                    <button id="tab-pomodoro" onclick="switchTab('pomodoro')" class="px-2 sm:px-2.5 lg:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl transition-all tab-glow text-muted-custom whitespace-nowrap">🍅 Pomodoro</button>
+                    <button id="tab-journal" onclick="switchTab('journal')" class="px-2 sm:px-2.5 lg:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl transition-all tab-glow text-muted-custom whitespace-nowrap">📖 Journal</button>
+                    <button id="tab-flowtunes" onclick="switchTab('flowtunes')" class="px-2 sm:px-2.5 lg:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl transition-all tab-glow text-muted-custom whitespace-nowrap">🎵 flowtunes</button>
+                    <button id="tab-groups" onclick="switchTab('groups')" class="px-2 sm:px-2.5 lg:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl transition-all tab-glow text-muted-custom whitespace-nowrap">👥 Groups</button>
                     
                     <button id="add-btn" onclick="addTimer()" class="w-7 h-7 flex items-center justify-center custom-btn text-xs rounded-xl transition-all active:scale-95 shadow ml-1 shrink-0" title="Add Item">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
@@ -797,15 +948,17 @@
                 </nav>
             </div>
             
-            <div class="flex items-center space-x-1.5 sm:space-x-2 shrink-0 ml-auto relative">
+            <div class="flex items-center space-x-1 sm:space-x-1.5 shrink-0 ml-auto relative flex-wrap">
                 <button id="layout-shortcut-btn" onclick="cycleLayoutShortcut()" class="glass-panel px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-bold accent-text flex items-center gap-1.5 hover:border-white/30 transition shadow cursor-pointer" title="Quick Switch Layout">
                     <span id="layout-shortcut-icon">田</span>
-                    <span id="layout-shortcut-label" class="hidden md:inline">Grid View</span>
+                    <span id="layout-shortcut-label" class="hidden 2xl:inline">Grid View</span>
                 </button>
+
+                <button id="desktop-add-btn" onclick="addTimer()" class="hidden sm:flex w-8 h-8 items-center justify-center custom-btn text-sm rounded-xl shadow" title="Add">+</button>
 
                 <div class="relative" id="theme-dropdown-container">
                     <button onclick="toggleThemeDropdown(event)" class="glass-panel px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-bold accent-text flex items-center gap-1.5 hover:border-white/30 transition shadow cursor-pointer">
-                        <span id="current-theme-label" class="truncate max-w-[80px] sm:max-w-none">🐱 Catppuccin</span>
+                        <span id="current-theme-icon">🐱</span><span id="current-theme-label" class="hidden 2xl:inline truncate max-w-[80px] 2xl:max-w-none">Catppuccin</span>
                         <span id="dropdown-arrow" class="text-[10px] opacity-60 transition-transform duration-200">▼</span>
                     </button>
 
@@ -851,6 +1004,10 @@
                             </div>
                         </div>
                         <div class="my-1 border-t border-white/10"></div>
+                        <div onclick="openCustomBgModal(); closeThemeMenu();" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition">
+                            <span>🖼️ Custom Background</span>
+                        </div>
+                        <div class="my-1 border-t border-white/10"></div>
                         <div class="px-3 py-2 rounded-xl flex items-center justify-between gap-2" onclick="event.stopPropagation()">
                             <span class="text-xs font-semibold">🌑 AMOLED Mode</span>
                             <label class="toggle-switch">
@@ -861,14 +1018,19 @@
                     </div>
                 </div>
 
-                <button onclick="window.location.href = 'todo.html' + window.location.hash;" class="p-1.5 sm:p-2 custom-nav border rounded-xl text-xs font-bold hover:border-white/30 transition shadow" title="To-Do List">✅</button>
+                <button onclick="window.location.href = 'todo.html?t=' + Date.now() + window.location.hash;" class="p-1.5 sm:p-2 custom-nav border rounded-xl text-xs font-bold hover:border-white/30 transition shadow" title="To-Do List">✅</button>
 
                 <button onclick="openModal('settings-modal')" class="p-1.5 sm:p-2 custom-nav border rounded-xl text-xs font-bold hover:border-white/30 transition shadow" title="Settings">⚙️</button>
+
+                <button id="privacy-toggle-btn" onclick="togglePrivateMode()" class="hidden px-2 sm:px-2.5 py-1.5 custom-nav border rounded-xl text-[10px] sm:text-xs font-bold text-muted-custom hover:text-white transition shadow" title="Private Mode">
+                    <span id="privacy-icon">🌐</span>
+                    <span id="privacy-label" class="hidden 2xl:inline ml-1">Public</span>
+                </button>
 
                 <div class="relative" id="quick-links-dropdown-container">
                     <button onclick="toggleQuickLinksDropdown(event)" class="glass-panel px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-bold accent-text flex items-center gap-1 hover:border-white/30 transition shadow cursor-pointer" title="Quick Links Menu">
                         <span>🔗</span>
-                        <span class="hidden sm:inline">Links</span>
+                        <span class="hidden 2xl:inline">Links</span>
                         <span id="quick-links-arrow" class="text-[10px] opacity-60 transition-transform duration-200">▼</span>
                     </button>
 
@@ -908,7 +1070,8 @@
                             <span class="text-[11px] font-extrabold uppercase tracking-wider text-muted-custom">☁️ Cloud Sync</span>
                             <span id="sync-status-label" class="text-[10px] font-bold accent-text bg-white/5 px-2 py-0.5 rounded-lg border border-white/10">Connecting...</span>
                         </div>
-                        <p class="text-[11px] text-muted-custom mb-3 leading-relaxed">Share the invite link below to sync your timers, settings, and journal with another device in real time.</p>
+                        <p class="text-[11px] text-muted-custom mb-2 leading-relaxed">Share the invite link below to sync your timers, settings, and journal with another device in real time.</p>
+                        <p class="text-[10px] text-muted-custom mb-3 leading-relaxed">Rooms are automatically removed after 10 days of inactivity.</p>
                         <button onclick="copyInviteLink()" class="w-full py-2 custom-btn text-xs rounded-xl font-bold flex items-center justify-center gap-1.5">
                             <span>📤</span>
                             <span>Copy Invite Link</span>
@@ -1017,6 +1180,99 @@
             </div>
         </div>
 
+        <!-- GROUPS SECTION -->
+        <div id="groups-container" class="hidden max-w-3xl mx-auto">
+            <!-- Not logged in -->
+            <div id="groups-auth-prompt" class="custom-card rounded-3xl p-6 sm:p-10 text-center">
+                <div class="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-4 text-3xl">👥</div>
+                <h3 class="text-lg font-bold mb-2">Study with Friends</h3>
+                <p class="text-xs text-muted-custom mb-6 max-w-md mx-auto">Create a free account to join study groups, add friends, and view each other's dashboards in real time. This is completely optional — you can keep using timers and pomodoro without an account.</p>
+                <div class="flex flex-wrap justify-center gap-3">
+                    <button onclick="openAuthModal('signup')" class="px-5 py-2.5 custom-btn text-xs rounded-xl font-bold">Create Account</button>
+                    <button onclick="openAuthModal('login')" class="px-5 py-2.5 custom-nav border text-xs rounded-xl font-bold text-muted-custom hover:text-white">Log In</button>
+                </div>
+            </div>
+
+            <!-- Logged in -->
+            <div id="groups-logged-in" class="hidden space-y-6">
+                <!-- User profile strip -->
+                <div class="custom-card rounded-2xl p-4 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div id="auth-profile-circle" class="profile-circle">?</div>
+                        <div>
+                            <div id="auth-display-name" class="text-sm font-bold">User</div>
+                            <div id="auth-username" class="text-[11px] text-muted-custom">@user</div>
+                        </div>
+                    </div>
+                    <button onclick="logout()" class="px-3 py-1.5 custom-nav border text-[11px] rounded-xl font-bold text-muted-custom hover:text-white">Log Out</button>
+                </div>
+
+                <!-- Friends -->
+                <div class="custom-card rounded-3xl p-5 sm:p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-bold accent-text">Friends</h3>
+                        <button onclick="openModal('add-friend-modal')" class="px-3 py-1.5 custom-btn text-[11px] rounded-xl font-bold">+ Add Friend</button>
+                    </div>
+                    <div id="friend-requests-list" class="mb-4 space-y-2"></div>
+                    <div id="friends-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+                </div>
+
+                <!-- Groups -->
+                <div class="custom-card rounded-3xl p-5 sm:p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-bold accent-text">Groups</h3>
+                        <button onclick="openModal('create-group-modal')" class="px-3 py-1.5 custom-btn text-[11px] rounded-xl font-bold">+ Create Group</button>
+                    </div>
+                    <div id="groups-list" class="space-y-3"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GROUP VIEW -->
+        <div id="group-view-container" class="hidden max-w-5xl mx-auto">
+            <div class="flex items-center justify-between mb-5">
+                <button onclick="closeGroupView()" class="px-3 py-1.5 custom-nav border text-[11px] rounded-xl font-bold text-muted-custom hover:text-white">← Back</button>
+                <div class="flex items-center gap-2">
+                    <h3 id="group-view-name" class="text-base font-bold accent-text">Group Name</h3>
+                    <button id="group-edit-btn" onclick="editGroupName()" class="hidden p-1.5 custom-nav border rounded-lg text-[11px] text-muted-custom hover:text-white" title="Rename Group">✏️</button>
+                </div>
+                <button id="group-leave-btn" onclick="leaveCurrentGroup()" class="px-3 py-1.5 bg-red-500/10 text-red-400 border border-red-500/30 text-[11px] rounded-xl font-bold hover:bg-red-500/20">Leave</button>
+            </div>
+
+            <!-- Invite by username -->
+            <div class="custom-card rounded-2xl p-3 mb-5 flex flex-wrap items-center gap-2">
+                <input id="invite-username" type="text" placeholder="Add member by username" class="flex-1 min-w-[140px] custom-nav border rounded-xl px-3 py-2 text-xs outline-none text-white">
+                <button onclick="handleInviteToGroup()" class="px-4 py-2 custom-btn text-[11px] rounded-xl font-bold">Invite</button>
+            </div>
+            <p id="invite-error" class="text-[11px] text-red-400 mb-5 text-center font-semibold min-h-[1rem]"></p>
+
+            <div id="group-members-grid" class="layout-grid"></div>
+        </div>
+
+        <!-- VIEW-ONLY DASHBOARD -->
+        <div id="view-dashboard-container" class="hidden max-w-6xl mx-auto">
+            <!-- View-only header with tabs -->
+            <header class="custom-nav border rounded-2xl p-2 mb-5 flex flex-wrap items-center justify-between gap-2">
+                <button onclick="closeViewDashboard()" class="px-3 py-1.5 custom-nav border text-[11px] rounded-xl font-bold text-muted-custom hover:text-white shrink-0">← Back</button>
+                <nav class="flex items-center gap-1 custom-nav p-1 rounded-xl border overflow-x-auto no-scrollbar">
+                    <button id="view-tab-stopwatch" onclick="switchViewOnlyTab('stopwatch')" class="view-tab-btn px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-bold rounded-xl tab-active whitespace-nowrap">⏱️ Stopwatch</button>
+                    <button id="view-tab-timer" onclick="switchViewOnlyTab('timer')" class="view-tab-btn px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-bold rounded-xl text-muted-custom whitespace-nowrap">⏳ Timer</button>
+                    <button id="view-tab-pomodoro" onclick="switchViewOnlyTab('pomodoro')" class="view-tab-btn px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-bold rounded-xl text-muted-custom whitespace-nowrap">🍅 Pomodoro</button>
+                    <button id="view-tab-journal" onclick="switchViewOnlyTab('journal')" class="view-tab-btn px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-bold rounded-xl text-muted-custom whitespace-nowrap">📖 Journal</button>
+                </nav>
+                <div class="view-only-badge shrink-0">View Only</div>
+            </header>
+
+            <div class="custom-card rounded-3xl p-5 sm:p-6 mb-6 flex items-center gap-3">
+                <div id="view-profile-circle" class="profile-circle">?</div>
+                <div>
+                    <div id="view-display-name" class="text-base font-bold">User</div>
+                    <div id="view-username" class="text-xs text-muted-custom">@user</div>
+                </div>
+            </div>
+            <div id="view-dashboard-content"></div>
+        </div>
+
         <!-- GRID FOR REGULAR TIMERS -->
         <div id="timers-grid" class="layout-grid pt-2 sm:pt-4"></div>
 
@@ -1038,6 +1294,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
     <script>
         // Cloud Sync state - declared first, before anything else runs,
@@ -1051,6 +1308,39 @@
         let roomStateRef = null;
         let roomMetaRef = null;
         const SYNC_CLIENT_ID = 'c_' + Math.random().toString(36).slice(2) + '_' + Date.now();
+        // ============================================================
+        // SOCIAL / GROUPS STATE
+        // ============================================================
+        let authUser = null;
+        let userProfile = null;
+        let myPublicStateRef = null;
+        let publicStateListeners = {};
+        let groupListeners = [];
+        let currentGroupId = null;
+        let viewOnlyCurrentTab = 'stopwatch';
+        let viewOnlyState = null;
+        let viewOnlyProfile = null;
+        const MAX_GROUPS = 3;
+
+        function usernameToEmail(username) {
+            return username.toLowerCase().trim() + '@pomoharbor.local';
+        }
+
+        function stringToColor(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            const hue = Math.abs(hash % 360);
+            return `hsl(${hue}, 65%, 55%)`;
+        }
+
+        function getInitials(name) {
+            if (!name) return '?';
+            const parts = name.trim().split(/\s+/);
+            if (parts.length === 1) return parts[0].charAt(0);
+            return parts[0].charAt(0) + parts[parts.length - 1].charAt(0);
+        }
+
+
 
         // Room ID must be resolved BEFORE any localStorage read below, and
         // every localStorage key must be namespaced by it. Otherwise two
@@ -1194,6 +1484,57 @@
         let editingTimerId = null;
         const MAX_LIMIT = 7;
         const MAX_QUICK_LINKS = 10;
+        const MAX_FRIENDS = 10;
+        const MAX_GROUP_MEMBERS = 10;
+        const ROOM_TTL_DAYS = 10;
+        const ROOM_TTL_MS = ROOM_TTL_DAYS * 24 * 60 * 60 * 1000;
+        let pendingAccountUid = null;
+        let isAuthenticating = false;
+
+        function isRemoteStale(remote) {
+            const ts = remote && (remote.updatedAt || remote.lastActiveAt);
+            if (!ts) return false;
+            return Date.now() - ts > ROOM_TTL_MS;
+        }
+
+        function cleanupCurrentRoomAndRedirect() {
+            if (roomRef) roomRef.remove().catch(() => {});
+            const suffix = '__' + ROOM_ID;
+            Object.keys(localStorage).forEach(key => {
+                if (key.endsWith(suffix)) localStorage.removeItem(key);
+            });
+            window.location.hash = generateRoomId();
+            window.location.reload();
+        }
+
+        async function migrateCurrentRoomTo(uid) {
+            if (!firebase.database) return;
+            try {
+                const room = firebase.database().ref('rooms/' + uid);
+                await room.child('state').update(collectLocalState());
+                await room.child('meta').update({ lastActiveAt: firebase.database.ServerValue.TIMESTAMP });
+                await firebase.database().ref('users/' + uid + '/roomId').set(uid);
+                window.location.hash = uid;
+                window.location.reload();
+            } catch (e) {
+                console.warn('migrate room error', e);
+                showToast('Could not sync account room');
+            }
+        }
+
+        function resolveAccountDataConflict(choice) {
+            closeModal('account-data-modal');
+            isAuthenticating = false;
+            if (!pendingAccountUid) return;
+            if (choice === 'local') {
+                migrateCurrentRoomTo(pendingAccountUid);
+            } else {
+                window.location.hash = pendingAccountUid;
+                window.location.reload();
+            }
+            pendingAccountUid = null;
+        }
+
         let audioCtx = null;
         let wakeLock = null;
         let alarmIntervalId = null;
@@ -1424,12 +1765,14 @@
 
         function selectTheme(themeKey, labelText) {
             changeTheme(themeKey);
-            document.getElementById('current-theme-label').innerText = labelText;
+            const [emoji, ...rest] = labelText.split(' ');
+            document.getElementById('current-theme-icon').innerText = emoji;
+            document.getElementById('current-theme-label').innerText = rest.join(' ');
             closeThemeMenu();
         }
 
         let userSettings = JSON.parse(localStorage.getItem(roomKey('pomoharbor_user_settings'))) || {
-            soundTone: 'beep', volume: 0.8, showMs: true, compactView: false, fontStyle: 'mono', keepAwake: false, layoutMode: 'grid', repeatAlarm: false
+            soundTone: 'beep', volume: 0.8, showMs: true, compactView: false, fontStyle: 'mono', keepAwake: false, layoutMode: 'grid', repeatAlarm: false, privateMode: false
         };
 
         let pomodoroState = JSON.parse(localStorage.getItem(roomKey('pomoharbor_pomo_state'))) || {
@@ -1546,7 +1889,7 @@
             }
         });
 
-        function savePomo() { localStorage.setItem(roomKey('pomoharbor_pomo_state'), JSON.stringify(pomodoroState)); scheduleCloudSync(); }
+        function savePomo() { localStorage.setItem(roomKey('pomoharbor_pomo_state'), JSON.stringify(pomodoroState)); scheduleCloudSync(); updateMyPublicState(); }
 
         function updateLayoutShortcutUI() {
             const currentMode = userSettings.layoutMode || 'grid';
@@ -1589,16 +1932,23 @@
             userSettings[key] = val;
             localStorage.setItem(roomKey('pomoharbor_user_settings'), JSON.stringify(userSettings));
             scheduleCloudSync();
+            updateMyPublicState();
         }
 
         function changeTheme(themeName) {
             document.documentElement.setAttribute('data-theme', themeName);
             localStorage.setItem(roomKey('pomoharbor_fmhy_theme'), themeName);
             scheduleCloudSync();
+            updateMyPublicState();
         }
 
         const savedTheme = localStorage.getItem(roomKey('pomoharbor_fmhy_theme')) || 'catppuccin';
-        document.getElementById('current-theme-label').innerText = themeLabels[savedTheme] || '🐱 Catppuccin';
+        (function(){
+            const initialLabel = themeLabels[savedTheme] || '🐱 Catppuccin';
+            const [emoji, ...rest] = initialLabel.split(' ');
+            document.getElementById('current-theme-icon').innerText = emoji;
+            document.getElementById('current-theme-label').innerText = rest.join(' ');
+        })();
         changeTheme(savedTheme);
         updateLayoutShortcutUI();
         renderQuickLinksUI();
@@ -1637,6 +1987,7 @@
             localStorage.setItem(roomKey('pomoharbor_amoled_mode'), isOn ? 'true' : 'false');
             applyAmoledMode(isOn);
             scheduleCloudSync();
+            updateMyPublicState();
         }
 
         const savedAmoledMode = localStorage.getItem(roomKey('pomoharbor_amoled_mode')) === 'true';
@@ -2048,7 +2399,7 @@
 
         let timers = JSON.parse(localStorage.getItem(roomKey('pomoharbor_v3_timers'))) || [];
 
-        function save() { localStorage.setItem(roomKey('pomoharbor_v3_timers'), JSON.stringify(timers)); scheduleCloudSync(); }
+        function save() { localStorage.setItem(roomKey('pomoharbor_v3_timers'), JSON.stringify(timers)); scheduleCloudSync(); updateMyPublicState(); }
 
         function logSessionToJournal(taskTitle, category, startMs, endMs) {
             let sessionDuration = endMs - startMs;
@@ -2281,7 +2632,7 @@
             if (currentTab === tab) return;
 
             currentTab = tab;
-            ['stopwatch', 'timer', 'pomodoro', 'journal', 'flowtunes'].forEach(t => {
+            ['stopwatch', 'timer', 'pomodoro', 'journal', 'flowtunes', 'groups'].forEach(t => {
                 const el = document.getElementById(`tab-${t}`);
                 if (el) el.className = t === tab ? "px-2.5 sm:px-4 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl transition-all tab-glow accent-text tab-active whitespace-nowrap" : "px-2.5 sm:px-4 py-1.5 text-[11px] sm:text-xs font-bold rounded-xl transition-all tab-glow text-muted-custom whitespace-nowrap";
             });
@@ -2289,12 +2640,16 @@
             const addBtn = document.getElementById('add-btn');
             if (addBtn) {
                 addBtn.style.display = (tab === 'pomodoro' || tab === 'flowtunes' || tab === 'journal') ? 'none' : 'flex';
-                addBtn.title = tab === 'stopwatch' ? "Add Stopwatch" : "Add Timer";
+                if (tab === 'groups') {
+                    addBtn.title = "Create Group";
+                } else {
+                    addBtn.title = tab === 'stopwatch' ? "Add Stopwatch" : "Add Timer";
+                }
             }
             
             const layoutShortcutBtn = document.getElementById('layout-shortcut-btn');
             if (layoutShortcutBtn) {
-                layoutShortcutBtn.style.display = (tab === 'pomodoro' || tab === 'flowtunes' || tab === 'journal') ? 'none' : 'flex';
+                layoutShortcutBtn.style.display = (tab === 'pomodoro' || tab === 'flowtunes' || tab === 'journal' || tab === 'groups') ? 'none' : 'flex';
             }
 
             const presetsBar = document.getElementById('presets-container');
@@ -2305,6 +2660,7 @@
 
             const mainContainer = document.getElementById('main-container');
             mainContainer.scrollTop = 0;
+            updateMyPublicState();
 
             // On mobile/tablet the fade-in is disabled (animations are off
             // there), so just swap the view instantly.
@@ -2397,6 +2753,11 @@
         }
 
         function addTimer() {
+            if (currentTab === 'groups') {
+                if (!authUser) { openAuthModal('signup'); return; }
+                openModal('create-group-modal');
+                return;
+            }
             const count = timers.filter(t => (t.type || 'stopwatch') === currentTab).length;
             if (count >= MAX_LIMIT) {
                 const limitTypeEl = document.getElementById('limit-type-text');
@@ -2618,6 +2979,9 @@
             const pomoContainer = document.getElementById('pomodoro-container');
             const flowtunesContainer = document.getElementById('flowtunes-container');
             const journalContainer = document.getElementById('journal-container');
+            const groupsContainer = document.getElementById('groups-container');
+            const groupViewContainer = document.getElementById('group-view-container');
+            const viewDashboardContainer = document.getElementById('view-dashboard-container');
             const emptyState = document.getElementById('empty-state');
 
             grid.className = `layout-${userSettings.layoutMode || 'grid'} pt-2 sm:pt-4`;
@@ -2627,6 +2991,9 @@
                 grid.classList.add('hidden');
                 pomoContainer.classList.add('hidden');
                 journalContainer.classList.add('hidden');
+                groupsContainer.classList.add('hidden');
+                groupViewContainer.classList.add('hidden');
+                viewDashboardContainer.classList.add('hidden');
                 emptyState.classList.add('hidden');
                 flowtunesContainer.classList.remove('hidden');
                 return;
@@ -2638,6 +3005,9 @@
             if (currentTab === 'journal') {
                 grid.classList.add('hidden');
                 pomoContainer.classList.add('hidden');
+                groupsContainer.classList.add('hidden');
+                groupViewContainer.classList.add('hidden');
+                viewDashboardContainer.classList.add('hidden');
                 emptyState.classList.add('hidden');
                 journalContainer.classList.remove('hidden');
                 renderJournalUI();
@@ -2648,6 +3018,9 @@
 
             if (currentTab === 'pomodoro') {
                 grid.classList.add('hidden');
+                groupsContainer.classList.add('hidden');
+                groupViewContainer.classList.add('hidden');
+                viewDashboardContainer.classList.add('hidden');
                 emptyState.classList.add('hidden');
                 pomoContainer.classList.remove('hidden');
 
@@ -2680,6 +3053,18 @@
             }
 
             pomoContainer.classList.add('hidden');
+
+            if (currentTab === 'groups') {
+                grid.classList.add('hidden');
+                emptyState.classList.add('hidden');
+                groupsContainer.classList.remove('hidden');
+                renderGroupsUI();
+                return;
+            }
+            groupsContainer.classList.add('hidden');
+            groupViewContainer.classList.add('hidden');
+            viewDashboardContainer.classList.add('hidden');
+
             grid.classList.remove('hidden');
 
             const activeItems = timers.filter(t => (t.type || 'stopwatch') === currentTab);
@@ -2910,6 +3295,7 @@
                     userSettings = remote.userSettings;
                     localStorage.setItem(roomKey('pomoharbor_user_settings'), JSON.stringify(userSettings));
                     initSettingsUI();
+                    updatePrivacyToggleUI();
                 }
                 if (remote.journal) {
                     localStorage.setItem(roomKey('pomoharbor_journal'), JSON.stringify(remote.journal));
@@ -2935,7 +3321,11 @@
                     document.documentElement.setAttribute('data-theme', remote.theme);
                     localStorage.setItem(roomKey('pomoharbor_fmhy_theme'), remote.theme);
                     const themeLabelEl = document.getElementById('current-theme-label');
-                    if (themeLabelEl) themeLabelEl.innerText = themeLabels[remote.theme] || '🐱 Catppuccin';
+                    const themeIconEl = document.getElementById('current-theme-icon');
+                    const remoteThemeLabel = themeLabels[remote.theme] || '🐱 Catppuccin';
+                    const [remoteEmoji, ...remoteRest] = remoteThemeLabel.split(' ');
+                    if (themeIconEl) themeIconEl.innerText = remoteEmoji;
+                    if (themeLabelEl) themeLabelEl.innerText = remoteRest.join(' ');
                 }
                 if (typeof remote.amoled === 'boolean') {
                     localStorage.setItem(roomKey('pomoharbor_amoled_mode'), remote.amoled ? 'true' : 'false');
@@ -3006,7 +3396,22 @@
                         pushStateToCloud();
                         return;
                     }
+                    if (isRemoteStale(remote)) {
+                        // Never auto-delete a logged-in user's own account room;
+                        // just revive it. Anonymous/shared stale rooms are cleaned.
+                        if (authUser && ROOM_ID === authUser.uid) {
+                            if (roomMetaRef) {
+                                roomMetaRef.child('lastActiveAt').set(firebase.database.ServerValue.TIMESTAMP).catch(() => {});
+                            }
+                        } else {
+                            cleanupCurrentRoomAndRedirect();
+                            return;
+                        }
+                    }
                     applyRemoteState(remote);
+                    if (roomMetaRef) {
+                        roomMetaRef.child('lastActiveAt').set(firebase.database.ServerValue.TIMESTAMP).catch(() => {});
+                    }
                 } catch (err) {
                     console.warn('Cloud Sync: listener error', err);
                     updateSyncStatusUI('offline');
@@ -3042,8 +3447,778 @@
         // END CLOUD SYNC SYSTEM
         // ============================================================
 
+
+
+        // ============================================================
+        // AUTHENTICATION & SOCIAL FUNCTIONS
+        // ============================================================
+
+        function initAuth() {
+            if (typeof firebase === 'undefined' || !firebase.auth) return;
+            const auth = firebase.auth();
+            auth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    authUser = user;
+                    await loadUserProfile(user.uid);
+                    updatePrivacyToggleUI();
+                    renderGroupsUI();
+                    if (currentTab === 'groups') render();
+
+                    // If the user opened the site with no room hash, take them
+                    // to their account's personal room so their data follows them.
+                    if (!isAuthenticating && !pendingAccountUid && !window.location.hash.replace('#', '').trim()) {
+                        const accountRoomSnap = await firebase.database().ref('rooms/' + user.uid + '/state').once('value');
+                        if (accountRoomSnap.exists()) {
+                            window.location.hash = user.uid;
+                            window.location.reload();
+                        } else {
+                            await migrateCurrentRoomTo(user.uid);
+                        }
+                    }
+                } else {
+                    authUser = null;
+                    userProfile = null;
+                    updatePrivacyToggleUI();
+                    detachAllGroupListeners();
+                    renderGroupsUI();
+                    if (currentTab === 'groups') render();
+                }
+            });
+        }
+
+        async function loadUserProfile(uid) {
+            try {
+                const snap = await firebase.database().ref('users/' + uid + '/profile').once('value');
+                userProfile = snap.val() || null;
+            } catch (e) {
+                console.warn('loadUserProfile error', e);
+            }
+        }
+
+        function openAuthModal(mode) {
+            document.getElementById('auth-error').innerText = '';
+            switchAuthTab(mode);
+            openModal('auth-modal');
+        }
+
+        function switchAuthTab(mode) {
+            const signupForm = document.getElementById('auth-signup-form');
+            const loginForm = document.getElementById('auth-login-form');
+            const signupTab = document.getElementById('auth-tab-signup');
+            const loginTab = document.getElementById('auth-tab-login');
+            const title = document.getElementById('auth-title');
+            if (mode === 'signup') {
+                signupForm.classList.remove('hidden');
+                loginForm.classList.add('hidden');
+                signupTab.className = 'flex-1 pb-2 text-xs font-bold auth-tab-active';
+                loginTab.className = 'flex-1 pb-2 text-xs font-bold auth-tab-inactive';
+                title.innerText = 'Create Account';
+            } else {
+                signupForm.classList.add('hidden');
+                loginForm.classList.remove('hidden');
+                signupTab.className = 'flex-1 pb-2 text-xs font-bold auth-tab-inactive';
+                loginTab.className = 'flex-1 pb-2 text-xs font-bold auth-tab-active';
+                title.innerText = 'Log In';
+            }
+        }
+
+        async function handleSignUp() {
+            const name = document.getElementById('auth-name').value.trim();
+            const username = document.getElementById('auth-signup-username').value.trim().toLowerCase();
+            const password = document.getElementById('auth-signup-password').value;
+            const confirm = document.getElementById('auth-signup-confirm').value;
+            const errEl = document.getElementById('auth-error');
+            errEl.innerText = '';
+
+            if (!name || !username || !password) { errEl.innerText = 'Please fill all fields.'; return; }
+            if (!/^[a-z0-9_]{3,20}$/.test(username)) { errEl.innerText = 'Username: 3-20 letters, numbers, underscores.'; return; }
+            if (password.length < 6) { errEl.innerText = 'Password must be at least 6 characters.'; return; }
+            if (password !== confirm) { errEl.innerText = 'Passwords do not match.'; return; }
+
+            isAuthenticating = true;
+            try {
+                const usernameSnap = await firebase.database().ref('usernames/' + username).once('value');
+                if (usernameSnap.exists()) { errEl.innerText = 'Username already taken.'; return; }
+
+                const email = usernameToEmail(username);
+                const cred = await firebase.auth().createUserWithEmailAndPassword(email, password);
+                const uid = cred.user.uid;
+                const color = stringToColor(username);
+                const profile = { name, username, color };
+
+                await firebase.database().ref('usernames/' + username).set(uid);
+                await firebase.database().ref('users/' + uid + '/profile').set(profile);
+
+                userProfile = profile;
+                await migrateCurrentRoomTo(uid);
+            } catch (e) {
+                isAuthenticating = false;
+                errEl.innerText = e.message || 'Sign up failed.';
+            }
+        }
+
+        async function handleLogin() {
+            const username = document.getElementById('auth-login-username').value.trim().toLowerCase();
+            const password = document.getElementById('auth-login-password').value;
+            const errEl = document.getElementById('auth-error');
+            errEl.innerText = '';
+            if (!username || !password) { errEl.innerText = 'Please enter username and password.'; return; }
+
+            isAuthenticating = true;
+            try {
+                const email = usernameToEmail(username);
+                const cred = await firebase.auth().signInWithEmailAndPassword(email, password);
+                const uid = cred.user.uid;
+                const accountRoomSnap = await firebase.database().ref('rooms/' + uid + '/state').once('value');
+                if (accountRoomSnap.exists()) {
+                    pendingAccountUid = uid;
+                    closeModal('auth-modal');
+                    openModal('account-data-modal');
+                } else {
+                    await migrateCurrentRoomTo(uid);
+                }
+            } catch (e) {
+                isAuthenticating = false;
+                errEl.innerText = e.message || 'Login failed.';
+            }
+        }
+
+        function logout() {
+            const wasAccountRoom = authUser && ROOM_ID === authUser.uid;
+            if (typeof firebase !== 'undefined' && firebase.auth) {
+                firebase.auth().signOut().then(() => {
+                    if (wasAccountRoom) {
+                        window.location.hash = generateRoomId();
+                        window.location.reload();
+                    } else {
+                        showToast('Logged out.');
+                    }
+                });
+            }
+        }
+
+        // --- Public dashboard state (for friends/groups) ---
+
+        function collectPublicState() {
+            return {
+                timers: timers,
+                pomodoroState: pomodoroState,
+                userSettings: userSettings,
+                journal: JSON.parse(localStorage.getItem(roomKey('pomoharbor_journal'))) || [],
+                theme: localStorage.getItem(roomKey('pomoharbor_fmhy_theme')) || 'catppuccin',
+                amoled: localStorage.getItem(roomKey('pomoharbor_amoled_mode')) === 'true',
+                currentTab: currentTab,
+                updatedAt: firebase.database.ServerValue ? firebase.database.ServerValue.TIMESTAMP : Date.now()
+            };
+        }
+
+        function updateMyPublicState() {
+            if (!authUser || !firebase.database) return;
+            if (!myPublicStateRef) myPublicStateRef = firebase.database().ref('publicState/' + authUser.uid);
+            try {
+                if (userSettings.privateMode) {
+                    myPublicStateRef.remove().catch(() => {});
+                } else {
+                    myPublicStateRef.set(collectPublicState()).catch(() => {});
+                }
+            } catch (e) {}
+        }
+
+        function togglePrivateMode() {
+            userSettings.privateMode = !userSettings.privateMode;
+            localStorage.setItem(roomKey('pomoharbor_user_settings'), JSON.stringify(userSettings));
+            updatePrivacyToggleUI();
+            updateMyPublicState();
+            showToast(userSettings.privateMode ? 'Private mode on — others cannot see your dashboard' : 'Public mode on — friends can view your dashboard');
+        }
+
+        function updatePrivacyToggleUI() {
+            const btn = document.getElementById('privacy-toggle-btn');
+            const icon = document.getElementById('privacy-icon');
+            const label = document.getElementById('privacy-label');
+            if (!btn) return;
+            if (!authUser) {
+                btn.classList.add('hidden');
+                return;
+            }
+            btn.classList.remove('hidden');
+            if (userSettings.privateMode) {
+                icon.innerText = '🔒';
+                if (label) label.innerText = 'Private';
+                btn.classList.add('text-amber-400');
+                btn.classList.remove('text-muted-custom');
+            } else {
+                icon.innerText = '🌐';
+                if (label) label.innerText = 'Public';
+                btn.classList.remove('text-amber-400');
+                btn.classList.add('text-muted-custom');
+            }
+        }
+
+        // --- Friends ---
+
+        async function handleAddFriend() {
+            const username = document.getElementById('add-friend-username').value.trim().toLowerCase();
+            const errEl = document.getElementById('add-friend-error');
+            errEl.innerText = '';
+            if (!username) { errEl.innerText = 'Enter a username.'; return; }
+            if (!authUser) { errEl.innerText = 'You must be logged in.'; return; }
+            if (username === userProfile?.username) { errEl.innerText = 'You cannot add yourself.'; return; }
+
+            try {
+                const snap = await firebase.database().ref('usernames/' + username).once('value');
+                if (!snap.exists()) { errEl.innerText = 'User not found.'; return; }
+                const targetUid = snap.val();
+                await firebase.database().ref('users/' + targetUid + '/friendRequests/' + authUser.uid).set({
+                    from: authUser.uid,
+                    name: userProfile.name,
+                    username: userProfile.username,
+                    color: userProfile.color,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+                closeModal('add-friend-modal');
+                document.getElementById('add-friend-username').value = '';
+                showToast('Friend request sent!');
+            } catch (e) {
+                errEl.innerText = e.message || 'Could not send request.';
+            }
+        }
+
+        async function acceptFriendRequest(fromUid) {
+            if (!authUser) return;
+            try {
+                const [myFriendsSnap, theirFriendsSnap] = await Promise.all([
+                    firebase.database().ref('users/' + authUser.uid + '/friends').once('value'),
+                    firebase.database().ref('users/' + fromUid + '/friends').once('value')
+                ]);
+                const myCount = Object.keys(myFriendsSnap.val() || {}).length;
+                const theirCount = Object.keys(theirFriendsSnap.val() || {}).length;
+                if (myCount >= MAX_FRIENDS) { showToast('You can have max ' + MAX_FRIENDS + ' friends.'); return; }
+                if (theirCount >= MAX_FRIENDS) { showToast('This user already has max friends.'); return; }
+
+                await firebase.database().ref('users/' + authUser.uid + '/friends/' + fromUid).set(true);
+                await firebase.database().ref('users/' + fromUid + '/friends/' + authUser.uid).set(true);
+                await firebase.database().ref('users/' + authUser.uid + '/friendRequests/' + fromUid).remove();
+                showToast('Friend added!');
+                renderGroupsUI();
+            } catch (e) {
+                showToast('Could not accept request.');
+            }
+        }
+
+        async function declineFriendRequest(fromUid) {
+            if (!authUser) return;
+            try {
+                await firebase.database().ref('users/' + authUser.uid + '/friendRequests/' + fromUid).remove();
+                renderGroupsUI();
+            } catch (e) {}
+        }
+
+        async function removeFriend(uid) {
+            if (!authUser) return;
+            if (!confirm('Remove this friend?')) return;
+            try {
+                await firebase.database().ref('users/' + authUser.uid + '/friends/' + uid).remove();
+                await firebase.database().ref('users/' + uid + '/friends/' + authUser.uid).remove();
+                renderGroupsUI();
+                showToast('Friend removed.');
+            } catch (e) {}
+        }
+
+        // --- Groups ---
+
+        async function handleCreateGroup() {
+            const name = document.getElementById('create-group-name').value.trim();
+            const errEl = document.getElementById('create-group-error');
+            errEl.innerText = '';
+            if (!authUser) { errEl.innerText = 'You must be logged in.'; return; }
+            if (!name) { errEl.innerText = 'Enter a group name.'; return; }
+
+            try {
+                const myGroupsSnap = await firebase.database().ref('users/' + authUser.uid + '/groups').once('value');
+                if (myGroupsSnap.exists() && Object.keys(myGroupsSnap.val() || {}).length >= MAX_GROUPS) {
+                    errEl.innerText = 'You can only be in ' + MAX_GROUPS + ' groups.';
+                    return;
+                }
+                const groupRef = firebase.database().ref('groups').push();
+                const groupId = groupRef.key;
+                await groupRef.child('meta').set({
+                    name: name,
+                    createdBy: authUser.uid,
+                    createdAt: firebase.database.ServerValue.TIMESTAMP
+                });
+                await groupRef.child('members/' + authUser.uid).set(true);
+                await firebase.database().ref('users/' + authUser.uid + '/groups/' + groupId).set({ name: name });
+                closeModal('create-group-modal');
+                document.getElementById('create-group-name').value = '';
+                showToast('Group created!');
+                renderGroupsUI();
+            } catch (e) {
+                errEl.innerText = e.message || 'Could not create group.';
+            }
+        }
+
+        async function leaveCurrentGroup() {
+            if (!authUser || !currentGroupId) return;
+            if (!confirm('Leave this group?')) return;
+            try {
+                await firebase.database().ref('groups/' + currentGroupId + '/members/' + authUser.uid).remove();
+                await firebase.database().ref('users/' + authUser.uid + '/groups/' + currentGroupId).remove();
+                closeGroupView();
+                renderGroupsUI();
+                showToast('Left group.');
+            } catch (e) {}
+        }
+
+        async function handleInviteToGroup() {
+            const username = document.getElementById('invite-username').value.trim().toLowerCase();
+            const errEl = document.getElementById('invite-error');
+            errEl.innerText = '';
+            if (!authUser || !currentGroupId) return;
+            if (!username) { errEl.innerText = 'Enter a username.'; return; }
+            if (username === userProfile?.username) { errEl.innerText = 'You cannot invite yourself.'; return; }
+
+            try {
+                const snap = await firebase.database().ref('usernames/' + username).once('value');
+                if (!snap.exists()) { errEl.innerText = 'User not found.'; return; }
+                const targetUid = snap.val();
+
+                const [memberSnap, targetGroupsSnap] = await Promise.all([
+                    firebase.database().ref('groups/' + currentGroupId + '/members').once('value'),
+                    firebase.database().ref('users/' + targetUid + '/groups').once('value')
+                ]);
+                const members = memberSnap.val() || {};
+                if (members[targetUid]) { errEl.innerText = 'User is already in this group.'; return; }
+                if (Object.keys(members).length >= MAX_GROUP_MEMBERS) { errEl.innerText = 'Group is full (max ' + MAX_GROUP_MEMBERS + ').'; return; }
+
+                const targetGroups = targetGroupsSnap.val() || {};
+                if (Object.keys(targetGroups).length >= MAX_GROUPS) { errEl.innerText = 'This user is already in ' + MAX_GROUPS + ' groups.'; return; }
+
+                const groupMetaSnap = await firebase.database().ref('groups/' + currentGroupId + '/meta').once('value');
+                const groupName = groupMetaSnap.val()?.name || 'Group';
+
+                await firebase.database().ref('groups/' + currentGroupId + '/members/' + targetUid).set(true);
+                await firebase.database().ref('users/' + targetUid + '/groups/' + currentGroupId).set({ name: groupName });
+
+                document.getElementById('invite-username').value = '';
+                showToast('Member added!');
+                openGroup(currentGroupId);
+            } catch (e) {
+                errEl.innerText = e.message || 'Could not invite user.';
+            }
+        }
+
+        async function editGroupName() {
+            if (!authUser || !currentGroupId) return;
+            try {
+                const metaSnap = await firebase.database().ref('groups/' + currentGroupId + '/meta').once('value');
+                const meta = metaSnap.val() || {};
+                if (meta.createdBy !== authUser.uid) { showToast('Only the group creator can rename it.'); return; }
+
+                const newName = prompt('Rename group:', meta.name || 'Group');
+                if (!newName || !newName.trim()) return;
+                await renameGroup(currentGroupId, newName.trim());
+            } catch (e) {}
+        }
+
+        async function renameGroup(groupId, newName) {
+            if (!authUser || !groupId || !newName) return;
+            try {
+                await firebase.database().ref('groups/' + groupId + '/meta/name').set(newName);
+                const membersSnap = await firebase.database().ref('groups/' + groupId + '/members').once('value');
+                const memberUids = Object.keys(membersSnap.val() || {});
+                const updates = {};
+                memberUids.forEach(uid => {
+                    updates['users/' + uid + '/groups/' + groupId + '/name'] = newName;
+                });
+                await firebase.database().ref().update(updates);
+                document.getElementById('group-view-name').innerText = escapeHtml(newName);
+                showToast('Group renamed!');
+            } catch (e) {
+                showToast('Could not rename group.');
+            }
+        }
+
+        // --- Rendering groups / friends ---
+
+        async function renderGroupsUI() {
+            const authPrompt = document.getElementById('groups-auth-prompt');
+            const loggedIn = document.getElementById('groups-logged-in');
+            if (!authPrompt || !loggedIn) return;
+
+            if (!authUser || !userProfile) {
+                authPrompt.classList.remove('hidden');
+                loggedIn.classList.add('hidden');
+                return;
+            }
+            authPrompt.classList.add('hidden');
+            loggedIn.classList.remove('hidden');
+
+            document.getElementById('auth-display-name').innerText = escapeHtml(userProfile.name);
+            document.getElementById('auth-username').innerText = '@' + escapeHtml(userProfile.username);
+            const circle = document.getElementById('auth-profile-circle');
+            circle.innerText = getInitials(userProfile.name);
+            circle.style.backgroundColor = userProfile.color || stringToColor(userProfile.username);
+
+            // Friends + requests
+            try {
+                const friendsSnap = await firebase.database().ref('users/' + authUser.uid + '/friends').once('value');
+                const requestsSnap = await firebase.database().ref('users/' + authUser.uid + '/friendRequests').once('value');
+                const friendsUids = friendsSnap.exists() ? Object.keys(friendsSnap.val() || {}) : [];
+                const requests = requestsSnap.exists() ? requestsSnap.val() || {} : {};
+
+                const friendsListEl = document.getElementById('friends-list');
+                const requestsListEl = document.getElementById('friend-requests-list');
+                friendsListEl.innerHTML = '';
+                requestsListEl.innerHTML = '';
+
+                if (Object.keys(requests).length > 0) {
+                    requestsListEl.innerHTML = '<div class="text-[10px] font-bold uppercase tracking-wider text-muted-custom mb-1">Friend Requests</div>';
+                    Object.entries(requests).forEach(([fromUid, req]) => {
+                        requestsListEl.innerHTML += `
+                            <div class="custom-nav border rounded-xl p-2 flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <div class="profile-circle" style="background-color:${escapeHtml(req.color || stringToColor(req.username))}; width:1.8rem; height:1.8rem; font-size:0.7rem;">${getInitials(req.name)}</div>
+                                    <div class="text-xs font-semibold">${escapeHtml(req.name)} <span class="text-muted-custom">@${escapeHtml(req.username)}</span></div>
+                                </div>
+                                <div class="flex gap-1">
+                                    <button onclick="acceptFriendRequest('${fromUid}')" class="px-2 py-1 custom-btn text-[10px] rounded-lg">Accept</button>
+                                    <button onclick="declineFriendRequest('${fromUid}')" class="px-2 py-1 custom-nav border text-[10px] rounded-lg text-muted-custom hover:text-white">Decline</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+
+                if (friendsUids.length === 0) {
+                    friendsListEl.innerHTML = '<p class="text-muted-custom text-xs italic col-span-full text-center py-2">No friends yet. Add one above!</p>';
+                } else {
+                    const profiles = await Promise.all(friendsUids.map(uid =>
+                        firebase.database().ref('users/' + uid + '/profile').once('value').then(s => ({ uid, ...s.val() }))
+                    ));
+                    friendsListEl.innerHTML = profiles.map(p => `
+                        <div class="friend-list-item custom-nav border rounded-xl p-3 flex items-center justify-between cursor-pointer hover:bg-white/5" onclick="openMemberDashboard('${p.uid}')">
+                            <div class="flex items-center gap-2">
+                                <div class="profile-circle" style="background-color:${escapeHtml(p.color || stringToColor(p.username))}; width:2rem; height:2rem; font-size:0.75rem;">${getInitials(p.name)}</div>
+                                <div>
+                                    <div class="text-xs font-bold">${escapeHtml(p.name)}</div>
+                                    <div class="text-[10px] text-muted-custom">@${escapeHtml(p.username)}</div>
+                                </div>
+                            </div>
+                            <button onclick="event.stopPropagation(); removeFriend('${p.uid}')" class="text-[10px] text-muted-custom hover:text-red-400 px-1">🗑️</button>
+                        </div>
+                    `).join('');
+                }
+
+                // Groups
+                const groupsSnap = await firebase.database().ref('users/' + authUser.uid + '/groups').once('value');
+                const groups = groupsSnap.exists() ? groupsSnap.val() || {} : {};
+                const groupsListEl = document.getElementById('groups-list');
+                if (Object.keys(groups).length === 0) {
+                    groupsListEl.innerHTML = '<p class="text-muted-custom text-xs italic text-center py-2">No groups yet. Create one!</p>';
+                } else {
+                    const groupInfos = await Promise.all(Object.entries(groups).map(([gid, meta]) =>
+                        firebase.database().ref('groups/' + gid + '/members').once('value').then(s => ({ gid, name: meta.name || 'Group', members: s.val() || {} }))
+                    ));
+                    groupsListEl.innerHTML = groupInfos.map(g => `
+                        <div class="group-list-item custom-nav border rounded-xl p-3 flex items-center justify-between cursor-pointer hover:bg-white/5" onclick="openGroup('${g.gid}')">
+                            <div>
+                                <div class="text-sm font-bold">${escapeHtml(g.name)}</div>
+                                <div class="text-[10px] text-muted-custom">${Object.keys(g.members).length} member${Object.keys(g.members).length === 1 ? '' : 's'}</div>
+                            </div>
+                            <span class="text-muted-custom text-xs">→</span>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {
+                console.warn('renderGroupsUI error', e);
+            }
+        }
+
+        // --- Group view ---
+
+        async function openGroup(groupId) {
+            if (!authUser) return;
+            currentGroupId = groupId;
+            detachAllGroupListeners();
+            const container = document.getElementById('group-view-container');
+            const grid = document.getElementById('group-members-grid');
+            const nameEl = document.getElementById('group-view-name');
+            container.classList.remove('hidden');
+            document.getElementById('groups-container').classList.add('hidden');
+            grid.innerHTML = '<p class="text-muted-custom text-xs italic col-span-full text-center py-8">Loading members...</p>';
+
+            try {
+                const metaSnap = await firebase.database().ref('groups/' + groupId + '/meta').once('value');
+                const meta = metaSnap.val() || {};
+                nameEl.innerText = escapeHtml(meta.name || 'Group');
+
+                const editBtn = document.getElementById('group-edit-btn');
+                if (editBtn) {
+                    if (meta.createdBy === authUser.uid) editBtn.classList.remove('hidden');
+                    else editBtn.classList.add('hidden');
+                }
+
+                const membersSnap = await firebase.database().ref('groups/' + groupId + '/members').once('value');
+                const memberUids = Object.keys(membersSnap.val() || {});
+
+                if (memberUids.length === 0) {
+                    grid.innerHTML = '<p class="text-muted-custom text-xs italic col-span-full text-center py-8">No members.</p>';
+                    return;
+                }
+
+                grid.innerHTML = '';
+                memberUids.forEach(uid => {
+                    const widget = document.createElement('div');
+                    widget.id = 'member-widget-' + uid;
+                    widget.className = 'member-widget custom-card rounded-3xl p-5 flex flex-col gap-3 border';
+                    widget.onclick = () => openMemberDashboard(uid);
+                    grid.appendChild(widget);
+
+                    const profileRef = firebase.database().ref('users/' + uid + '/profile');
+                    const stateRef = firebase.database().ref('publicState/' + uid);
+
+                    const profileListener = profileRef.on('value', (snap) => {
+                        const profile = snap.val() || {};
+                        renderMemberWidget(widget, uid, profile, null);
+                    });
+                    const stateListener = stateRef.on('value', (snap) => {
+                        const state = snap.val() || {};
+                        const profileRef2 = document.getElementById('member-profile-' + uid);
+                        const profile = profileRef2 ? JSON.parse(profileRef2.dataset.profile || '{}') : {};
+                        renderMemberWidget(widget, uid, profile, state);
+                    });
+
+                    groupListeners.push(profileRef, stateRef);
+                });
+            } catch (e) {
+                grid.innerHTML = '<p class="text-red-400 text-xs italic col-span-full text-center py-8">Could not load group.</p>';
+            }
+        }
+
+        function renderMemberWidget(el, uid, profile, state) {
+            const name = profile.name || 'User';
+            const username = profile.username || 'user';
+            const color = profile.color || stringToColor(username);
+            const initials = getInitials(name);
+            const currentTabLabel = state?.currentTab || 'stopwatch';
+            let summary = 'No active data';
+            if (state?.pomodoroState?.running) summary = 'Focusing (Pomodoro)';
+            else if (state?.timers?.some(t => t.running)) summary = 'Timer running';
+            else if (state?.timers?.length) summary = `${state.timers.length} item${state.timers.length === 1 ? '' : 's'}`;
+
+            el.innerHTML = `
+                <div id="member-profile-${uid}" data-profile="${escapeHtml(JSON.stringify(profile))}" class="flex items-center gap-3">
+                    <div class="profile-circle" style="background-color:${escapeHtml(color)}; width:2.75rem; height:2.75rem; font-size:0.85rem;">${initials}</div>
+                    <div>
+                        <div class="text-sm font-bold">${escapeHtml(name)}</div>
+                        <div class="text-[10px] text-muted-custom">@${escapeHtml(username)}</div>
+                    </div>
+                </div>
+                <div class="custom-nav border rounded-xl p-2.5 text-center">
+                    <div class="text-[10px] uppercase tracking-wider text-muted-custom mb-1">${currentTabLabel}</div>
+                    <div class="text-xs font-bold accent-text">${summary}</div>
+                </div>
+            `;
+        }
+
+        function closeGroupView() {
+            currentGroupId = null;
+            detachAllGroupListeners();
+            document.getElementById('group-view-container').classList.add('hidden');
+            document.getElementById('groups-container').classList.remove('hidden');
+        }
+
+        function detachAllGroupListeners() {
+            groupListeners.forEach(ref => ref.off());
+            groupListeners = [];
+            Object.values(publicStateListeners).forEach(ref => ref.off());
+            publicStateListeners = {};
+        }
+
+        // --- View-only dashboard ---
+
+        async function openMemberDashboard(uid) {
+            if (!authUser) return;
+            const container = document.getElementById('view-dashboard-container');
+            const content = document.getElementById('view-dashboard-content');
+            container.classList.remove('hidden');
+            document.getElementById('group-view-container').classList.add('hidden');
+            document.getElementById('groups-container').classList.add('hidden');
+            content.innerHTML = '<p class="text-muted-custom text-xs italic text-center py-8">Loading dashboard...</p>';
+            viewOnlyState = null;
+            viewOnlyProfile = null;
+
+            try {
+                const profileSnap = await firebase.database().ref('users/' + uid + '/profile').once('value');
+                const profile = profileSnap.val() || {};
+                viewOnlyProfile = profile;
+
+                let state = {};
+                if (uid === authUser.uid) {
+                    // Viewing own dashboard: use local state directly
+                    state = collectPublicState();
+                } else {
+                    const stateSnap = await firebase.database().ref('publicState/' + uid).once('value');
+                    state = stateSnap.val() || {};
+                }
+                viewOnlyState = state;
+                viewOnlyCurrentTab = state.currentTab || 'stopwatch';
+
+                renderViewOnlyDashboard();
+            } catch (e) {
+                content.innerHTML = '<p class="text-red-400 text-xs italic text-center py-8">Could not load dashboard.</p>';
+            }
+        }
+
+        function closeViewDashboard() {
+            document.getElementById('view-dashboard-container').classList.add('hidden');
+            viewOnlyState = null;
+            viewOnlyProfile = null;
+            if (currentGroupId) {
+                document.getElementById('group-view-container').classList.remove('hidden');
+            } else {
+                document.getElementById('groups-container').classList.remove('hidden');
+            }
+        }
+
+        function switchViewOnlyTab(tab) {
+            viewOnlyCurrentTab = tab;
+            renderViewOnlyDashboard();
+        }
+
+        function renderViewOnlyDashboard() {
+            if (!viewOnlyProfile) return;
+            document.getElementById('view-display-name').innerText = escapeHtml(viewOnlyProfile.name || 'User');
+            document.getElementById('view-username').innerText = '@' + escapeHtml(viewOnlyProfile.username || 'user');
+            const circle = document.getElementById('view-profile-circle');
+            circle.innerText = getInitials(viewOnlyProfile.name);
+            circle.style.backgroundColor = viewOnlyProfile.color || stringToColor(viewOnlyProfile.username);
+
+            ['stopwatch', 'timer', 'pomodoro', 'journal'].forEach(t => {
+                const btn = document.getElementById('view-tab-' + t);
+                if (!btn) return;
+                if (t === viewOnlyCurrentTab) {
+                    btn.className = 'view-tab-btn px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-bold rounded-xl tab-active whitespace-nowrap';
+                } else {
+                    btn.className = 'view-tab-btn px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-bold rounded-xl text-muted-custom whitespace-nowrap';
+                }
+            });
+
+            document.getElementById('view-dashboard-content').innerHTML = renderViewOnlyDashboardContent();
+        }
+
+        function renderViewOnlyDashboardContent() {
+            if (!viewOnlyState) return '<p class="text-muted-custom text-xs italic text-center py-8">No data to show.</p>';
+            if (!authUser) return '';
+
+            // If viewing someone else and they are private / have no public state
+            if (viewOnlyProfile && viewOnlyProfile.username && viewOnlyState.updatedAt === undefined && viewOnlyProfile.username !== userProfile?.username) {
+                return '<p class="text-muted-custom text-xs italic text-center py-8">🔒 This user\'s dashboard is private.</p>';
+            }
+
+            const state = viewOnlyState;
+            const settings = state.userSettings || {};
+            const fontClass = settings.fontStyle === 'digital' ? 'digital-font' : 'mono';
+            const compact = settings.compactView ? 'p-4 sm:p-5' : 'p-5 sm:p-7';
+            const tab = viewOnlyCurrentTab || state.currentTab || 'stopwatch';
+            let html = '';
+
+            if (tab === 'pomodoro' && state.pomodoroState) {
+                const ps = state.pomodoroState;
+                const maxC = ps.maxCycles || 4;
+                const target = ps.mode === 'work' ? ps.workTime : (ps.mode === 'shortBreak' ? ps.shortBreakTime : ps.longBreakTime);
+                const elapsed = ps.elapsed + (ps.running ? Date.now() - (ps.startTime || Date.now()) : 0);
+                const remaining = Math.max(0, target - elapsed);
+                let cyclesHtml = '';
+                for (let i = 1; i <= maxC; i++) {
+                    cyclesHtml += `<span class="text-lg sm:text-xl ${i <= ps.cycle ? 'opacity-100' : 'opacity-20'}">🍅</span>`;
+                }
+                html += `
+                    <div class="custom-card rounded-3xl p-6 sm:p-10 text-center border max-w-xl mx-auto">
+                        <div class="flex justify-center space-x-2 mb-4">${cyclesHtml}</div>
+                        <div class="inline-block px-4 py-1.5 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wider mb-6 border bg-white/5">${ps.mode}</div>
+                        <div class="${fontClass} text-5xl sm:text-8xl font-black tracking-tighter accent-text mb-6">${formatPomoTime(remaining)}</div>
+                        <div class="text-xs text-muted-custom font-semibold">Cycle ${ps.cycle} of ${maxC}</div>
+                    </div>
+                `;
+            } else if ((tab === 'stopwatch' || tab === 'timer') && state.timers?.length) {
+                const filtered = state.timers.filter(t => (t.type || 'stopwatch') === tab);
+                if (filtered.length === 0) {
+                    html += '<p class="text-muted-custom text-xs italic text-center py-8">No ' + tab + ' items.</p>';
+                } else {
+                    html += '<div class="layout-grid">';
+                    filtered.forEach(timer => {
+                        let elapsed = timer.elapsed;
+                        if (timer.running) elapsed += Date.now() - (timer.startTime || Date.now());
+                        const display = timer.type === 'timer' ? Math.max(0, timer.durationMs - elapsed) : elapsed;
+                        const lapsHtml = (timer.laps && timer.laps.length > 0) ? `
+                            <div class="custom-nav border rounded-2xl p-3 mt-4 text-xs ${fontClass} space-y-1.5 max-h-28 overflow-y-auto">
+                                ${timer.laps.slice(0, 5).map((lap, idx) => {
+                                    const lapName = typeof lap === 'object' ? lap.name : 'Split';
+                                    const lapTime = typeof lap === 'object' ? lap.time : lap;
+                                    return `<div class="flex justify-between text-muted-custom px-2 py-1"><span>${escapeHtml(lapName)}</span><span class="accent-text font-bold">${formatLapTime(lapTime)}</span></div>`;
+                                }).join('')}
+                                ${timer.laps.length > 5 ? '<div class="text-center text-[10px] text-muted-custom">... ' + (timer.laps.length - 5) + ' more</div>' : ''}
+                            </div>
+                        ` : '';
+                        html += `
+                            <div class="custom-card rounded-3xl ${compact} border">
+                                <div class="flex justify-between items-start mb-3">
+                                    <div>
+                                        <div class="text-[10px] font-bold text-muted-custom uppercase tracking-wider mb-1">${escapeHtml(timer.category || 'General')}</div>
+                                        <div class="text-xs font-bold truncate">${escapeHtml(timer.title || 'Untitled')}</div>
+                                    </div>
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-lg border ${timer.running ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-amber-500/10 text-amber-400 border-amber-500/30'}">${timer.running ? 'RUNNING' : 'PAUSED'}</span>
+                                </div>
+                                <div class="${fontClass} ${settings.compactView ? 'text-2xl sm:text-3xl' : 'text-3xl sm:text-4xl'} font-semibold tracking-tight mb-2">${formatTime(display)}</div>
+                                ${lapsHtml}
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                }
+            } else if (tab === 'journal' && state.journal?.length) {
+                html += '<div class="custom-card rounded-3xl p-5 sm:p-8 border shadow-2xl">';
+                html += '<div class="space-y-3 max-h-[60vh] overflow-y-auto pr-1">';
+                state.journal.slice().reverse().forEach(entry => {
+                    const h = Math.floor(entry.durationMs / 3600000);
+                    const m = Math.floor((entry.durationMs % 3600000) / 60000);
+                    const s = Math.floor((entry.durationMs % 60000) / 1000);
+                    const dur = `${h > 0 ? h + 'h ' : ''}${m}m ${s}s`;
+                    html += `
+                        <div class="flex flex-wrap justify-between items-center gap-2.5 p-4 bg-white/5 rounded-2xl border border-white/5">
+                            <div>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-white/10 text-slate-300 mr-2 uppercase tracking-wider">[${escapeHtml(entry.category)}]</span>
+                                <strong class="text-slate-100 text-sm font-semibold">${escapeHtml(entry.title)}</strong>
+                                <div class="text-[11px] text-muted-custom mt-1.5 font-mono">${entry.date} • ${entry.lastUpdated || entry.timestamp}</div>
+                            </div>
+                            <div class="mono text-sm font-bold accent-text bg-white/5 px-3 py-1 rounded-xl border border-white/10">${dur}</div>
+                        </div>
+                    `;
+                });
+                html += '</div></div>';
+            } else {
+                html = '<p class="text-muted-custom text-xs italic text-center py-8">No data to show.</p>';
+            }
+            return html;
+        }
+
         // Always runs, regardless of whether Cloud Sync above succeeded.
         render();
+        initAuth();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a22571e27990d5ee',t:'MTc4NTI1ODA3Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a22571e27990d5ee',t:'MTc4NTI1ODA3Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>
+        // Force a fresh load when the browser restores this page from the
+        // back-forward cache, so the user never sees an old dashboard version
+        // after navigating back from the to-do page.
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                const url = new URL(window.location.href);
+                url.searchParams.set('_bfc', Date.now());
+                window.location.replace(url.toString());
+            }
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a226dc62ebbdc66c',t:'MTc4NTI3MjkyNA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
