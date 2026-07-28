@@ -1490,6 +1490,13 @@
         const ROOM_TTL_MS = ROOM_TTL_DAYS * 24 * 60 * 60 * 1000;
         let pendingAccountUid = null;
         let isAuthenticating = false;
+        let privateMode = false;
+
+        function loadPrivateMode() {
+            const globalVal = localStorage.getItem('pomoharbor_private_mode');
+            privateMode = globalVal === 'true';
+        }
+        loadPrivateMode();
 
         function isRemoteStale(remote) {
             const ts = remote && (remote.updatedAt || remote.lastActiveAt);
@@ -1772,7 +1779,7 @@
         }
 
         let userSettings = JSON.parse(localStorage.getItem(roomKey('pomoharbor_user_settings'))) || {
-            soundTone: 'beep', volume: 0.8, showMs: true, compactView: false, fontStyle: 'mono', keepAwake: false, layoutMode: 'grid', repeatAlarm: false, privateMode: false
+            soundTone: 'beep', volume: 0.8, showMs: true, compactView: false, fontStyle: 'mono', keepAwake: false, layoutMode: 'grid', repeatAlarm: false
         };
 
         let pomodoroState = JSON.parse(localStorage.getItem(roomKey('pomoharbor_pomo_state'))) || {
@@ -3456,24 +3463,29 @@
         function initAuth() {
             if (typeof firebase === 'undefined' || !firebase.auth) return;
             const auth = firebase.auth();
+            // Keep login scoped to the current browser session and to the
+            // user's own account room. It will not leak into other room codes.
+            auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(() => {});
             auth.onAuthStateChanged(async (user) => {
                 if (user) {
                     authUser = user;
                     await loadUserProfile(user.uid);
+                    if (userProfile && typeof userProfile.privateMode === 'boolean') {
+                        privateMode = userProfile.privateMode;
+                        localStorage.setItem('pomoharbor_private_mode', privateMode ? 'true' : 'false');
+                    }
                     updatePrivacyToggleUI();
+                    updateMyPublicState();
                     renderGroupsUI();
                     if (currentTab === 'groups') render();
 
-                    // If the user opened the site with no room hash, take them
-                    // to their account's personal room so their data follows them.
-                    if (!isAuthenticating && !pendingAccountUid && !window.location.hash.replace('#', '').trim()) {
-                        const accountRoomSnap = await firebase.database().ref('rooms/' + user.uid + '/state').once('value');
-                        if (accountRoomSnap.exists()) {
-                            window.location.hash = user.uid;
-                            window.location.reload();
-                        } else {
-                            await migrateCurrentRoomTo(user.uid);
-                        }
+                    const currentHash = window.location.hash.replace('#', '').trim();
+
+                    // If the user opens a different room code while logged in,
+                    // sign them out so the account doesn't leak across rooms.
+                    if (currentHash && currentHash !== user.uid) {
+                        auth.signOut();
+                        return;
                     }
                 } else {
                     authUser = null;
@@ -3616,7 +3628,7 @@
             if (!authUser || !firebase.database) return;
             if (!myPublicStateRef) myPublicStateRef = firebase.database().ref('publicState/' + authUser.uid);
             try {
-                if (userSettings.privateMode) {
+                if (privateMode) {
                     myPublicStateRef.remove().catch(() => {});
                 } else {
                     myPublicStateRef.set(collectPublicState()).catch(() => {});
@@ -3625,11 +3637,14 @@
         }
 
         function togglePrivateMode() {
-            userSettings.privateMode = !userSettings.privateMode;
-            localStorage.setItem(roomKey('pomoharbor_user_settings'), JSON.stringify(userSettings));
+            privateMode = !privateMode;
+            localStorage.setItem('pomoharbor_private_mode', privateMode ? 'true' : 'false');
+            if (authUser) {
+                firebase.database().ref('users/' + authUser.uid + '/profile/privateMode').set(privateMode).catch(() => {});
+            }
             updatePrivacyToggleUI();
             updateMyPublicState();
-            showToast(userSettings.privateMode ? 'Private mode on — others cannot see your dashboard' : 'Public mode on — friends can view your dashboard');
+            showToast(privateMode ? 'Private mode on — others cannot see your dashboard' : 'Public mode on — friends can view your dashboard');
         }
 
         function updatePrivacyToggleUI() {
@@ -3642,7 +3657,7 @@
                 return;
             }
             btn.classList.remove('hidden');
-            if (userSettings.privateMode) {
+            if (privateMode) {
                 icon.innerText = '🔒';
                 if (label) label.innerText = 'Private';
                 btn.classList.add('text-amber-400');
@@ -4220,5 +4235,5 @@
             }
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a226dc62ebbdc66c',t:'MTc4NTI3MjkyNA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a227098928a7c508',t:'MTc4NTI3NDc3Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
