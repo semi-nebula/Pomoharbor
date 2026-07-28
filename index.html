@@ -282,6 +282,18 @@
             overflow: visible !important;
         }
 
+        /* Theme dropdown: scroll the long list of themes while keeping the
+           AMOLED toggle fixed at the bottom so it never spills outside the box. */
+        .theme-list {
+            max-height: min(60vh, 360px);
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 2px;
+        }
+        #theme-menu.dropdown-menu-open {
+            overflow: hidden !important;
+        }
+
         header {
             overflow: visible !important;
         }
@@ -293,6 +305,9 @@
                open, which is cheap on a laptop but adds up on mobile. */
             transition: padding 0.3s ease;
         }
+
+        /* Quick-jump bar is built/hidden by JS; hidden everywhere by default. */
+        #quick-jump-bar { display: none; }
 
         .layout-grid {
             display: flex;
@@ -360,45 +375,150 @@
             }
         }
 
-        /* --- NEW: MOBILE PORTRAIT VERTICAL NAV STYLES --- */
-        @media (max-width: 1024px) and (orientation: portrait) {
+        /* --- MOBILE / TABLET: BOTTOM TAB BAR (YouTube-style) --- */
+        /* Replaces the old left-side vertical panel with a fixed bottom
+           navigation bar so every function stays one-tap reachable and
+           nothing overlaps the content. Scoped to any narrow viewport
+           (<=1024px) - desktop keeps the header nav unchanged. */
+        @media (max-width: 1024px) {
             #main-nav-tabs {
                 position: fixed !important;
-                top: 5.5rem !important; /* Shifted widget up below the header */
                 left: 0 !important;
-                transform: none !important; /* Removed vertical centering */
-                flex-direction: column !important;
-                border-radius: 0 1.25rem 1.25rem 0 !important;
-                border-left: none !important;
-                padding: 0.75rem 0.5rem !important;
-                z-index: 100 !important;
-                box-shadow: 4px 0 25px rgba(0, 0, 0, 0.4) !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                top: auto !important;
+                transform: none !important;
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                justify-content: space-around !important;
                 align-items: stretch !important;
+                gap: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                border-radius: 0 !important;
+                border-left: none !important;
+                border-right: none !important;
+                border-bottom: none !important;
+                border-top: 1px solid var(--border-color) !important;
+                padding: 0.4rem 0.25rem calc(0.4rem + env(safe-area-inset-bottom)) !important;
+                z-index: 100 !important;
+                box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.45) !important;
+                overflow-x: auto !important;
+                overflow-y: hidden !important;
             }
             #main-nav-tabs > button {
-                margin: 0 0 0.5rem 0 !important; /* Override space-x-1 */
-                margin-left: 0 !important; 
-                justify-content: flex-start !important;
-                width: 100% !important;
-                text-align: left !important;
+                margin: 0 !important;
+                flex: 1 1 0 !important;
+                min-width: 0 !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: center !important;
+                gap: 0.15rem !important;
+                text-align: center !important;
+                padding: 0.35rem 0.15rem !important;
+                border-radius: 0.75rem !important;
+                font-size: 0.65rem !important;
+                line-height: 1.1 !important;
+                overflow: hidden !important;
             }
             #main-nav-tabs > button:last-child {
                 margin-bottom: 0 !important;
             }
             #main-nav-tabs > #add-btn {
-                margin: 0.25rem auto 0 auto !important;
-                align-self: center !important;
+                margin: 0 !important;
+                flex: 1 1 0 !important;
+                align-self: stretch !important;
                 justify-content: center !important;
-                width: 2.25rem !important;
-                height: 2.25rem !important;
-                padding: 0 !important;
+                width: auto !important;
+                height: auto !important;
+                padding: 0.35rem 0.15rem !important;
+                border-radius: 0.75rem !important;
+                flex-direction: column !important;
             }
             #main-container {
-                padding-left: 9.5rem !important; /* Proper breathing room for the left sidebar so it doesn't touch widgets */
+                padding-left: 0 !important;   /* drop the old left-sidebar offset */
+                padding-right: 0 !important;
+                /* Clear the bottom tab bar AND the quick-jump bar above it
+                   (incl. the device's home-indicator safe area). */
+                padding-bottom: calc(6rem + env(safe-area-inset-bottom)) !important;
             }
             #quick-links-list {
                 max-height: 25vh !important; /* Shortens the links list specifically for mobile */
             }
+
+            /* Quick-jump bar: one small button per stopwatch/timer, sitting
+               just above the bottom tab bar. Lets users hop straight to any
+               item (by index) without scrolling the sometimes-laggy list on
+               low-end phones. Shown by JS only on the stopwatch/timer tabs. */
+            #quick-jump-bar {
+                position: fixed !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: calc(2.6rem + env(safe-area-inset-bottom)) !important;
+                z-index: 90 !important;
+                display: none; /* toggled to flex by JS */
+                align-items: center;
+                gap: 0.4rem;
+                padding: 0.3rem 0.6rem;
+                padding-right: 4.5rem; /* keep the custom-bg FAB clear on the right */
+                overflow-x: auto !important;
+                overflow-y: hidden !important;
+                border-top: 1px solid var(--border-color) !important;
+            }
+            .quick-jump-btn {
+                flex: 0 0 auto;
+                min-width: 2.1rem;
+                height: 2.1rem;
+                padding: 0 0.5rem;
+                border-radius: 0.6rem;
+                font-size: 0.8rem;
+                font-weight: 700;
+                color: var(--text-main);
+                background-color: var(--bg-card);
+                border: 1px solid var(--border-color);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+            }
+            .quick-jump-btn:active { transform: scale(0.94); }
+        }
+
+        /* --- MOBILE / TABLET ONLY CHANGES ---
+           Everything below is scoped to max-width: 1024px so the desktop
+           layout is left completely untouched. Covers: disabling all
+           animations, hiding the footer, hiding the mascot, and keeping the
+           floating controls clear of the new bottom tab bar so no element
+           ever hides another. */
+        @media (max-width: 1024px) {
+            /* 1) Disable ALL animations & transitions on mobile/tablet so the
+               UI is completely static (snappier on weaker GPUs). Using the
+               shorthands with !important also kills keyframe animations. */
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
+                scroll-behavior: auto !important;
+            }
+
+            /* The base stylesheet forces `nav button { transition: all ... !important }`
+               (higher specificity than `*`), so the global rule above did NOT
+               reach the function-tab buttons. Override it explicitly, with an
+               ID-scoped selector that outranks the original. */
+            nav button,
+            #main-nav-tabs button {
+                transition: none !important;
+            }
+
+            /* 2) Remove the footer / credits line on mobile & tablet. */
+            footer { display: none !important; }
+
+            /* 4) Remove the interactive mascot on mobile & tablet. */
+            #mascot-container { display: none !important; }
+
+            /* Keep the custom-background FAB and the toast clear of the
+               bottom tab bar so they never sit on top of it. */
+            #custom-bg-wrap { bottom: 3.5rem !important; }
+            #toast { bottom: 7rem !important; }
         }
     </style>
 </head>
@@ -409,7 +529,7 @@
         <div id="mascot-bubble" class="absolute bottom-full left-0 mb-3 opacity-0 scale-95 pointer-events-none w-max max-w-[200px] sm:max-w-[220px] custom-card p-3 sm:p-4 rounded-2xl rounded-bl-sm text-[10px] sm:text-[11px] leading-relaxed font-bold accent-text shadow-2xl border transition-all duration-300 origin-bottom-left">
             <span id="mascot-quote"></span>
         </div>
-        <button id="mascot-btn" onclick="showMascotQuote(event)" class="w-12 h-12 sm:w-14 sm:h-14 rounded-full custom-card flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xl border cursor-grab active:cursor-grabbing border-white/20 hover:border-accent-primary p-2">
+        <button id="mascot-btn" onclick="showMascotQuote(event)" class="w-12 h-12 sm:w-14 sm:h-14 rounded-full custom-card flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xl border cursor-grab active:cursor-grabbing border-white/20 hover:border-[var(--accent-primary)] p-2">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="sm:w-8 sm:h-8">
                 <path d="M4 4L8 8H16L20 4V16C20 18.2 18.2 20 16 20H8C5.8 20 4 18.2 4 16V4Z" fill="#0F172A" stroke="#A855F7" stroke-width="1.5"/>
                 <rect x="7" y="10" width="3" height="3" fill="#A855F7"/>
@@ -420,8 +540,8 @@
     </div>
 
     <!-- CUSTOM BACKGROUND BUTTON (bottom-right, mirrors the mascot on the left) -->
-    <div class="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 select-none">
-        <button id="custom-bg-btn" onclick="event.stopPropagation(); openCustomBgModal();" class="w-12 h-12 sm:w-14 sm:h-14 rounded-full custom-card flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xl border border-white/20 hover:border-accent-primary" title="Custom Background">
+    <div id="custom-bg-wrap" class="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 select-none">
+        <button id="custom-bg-btn" onclick="event.stopPropagation(); openCustomBgModal();" class="w-12 h-12 sm:w-14 sm:h-14 rounded-full custom-card flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-xl border border-white/20 hover:border-[var(--accent-primary)]" title="Custom Background">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="accent-text sm:w-[22px] sm:h-[22px]">
                 <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.6"/>
                 <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
@@ -610,7 +730,7 @@
                       <rect x="14" y="10" width="3" height="3" fill="#A855F7"/>
                       <polygon points="11,14 13,14 12,15" fill="#EC4899"/>
                     </svg>
-                    <span class="hidden xs:inline">PomoHarbor</span>
+                    <span class="hidden sm:inline">PomoHarbor</span>
                 </h1>
                 
                 <!-- ID ADDED HERE FOR THE TARGETED MEDIA QUERY -->
@@ -639,44 +759,46 @@
                         <span id="dropdown-arrow" class="text-[10px] opacity-60 transition-transform duration-200">▼</span>
                     </button>
 
-                    <!-- THEME DROPDOWN: Removed glass-panel & backdrop-blur, added opaque background color -->
-                    <div id="theme-menu" class="dropdown-menu-base absolute right-0 top-full mt-3 w-44 sm:w-48 border rounded-2xl shadow-2xl p-1.5 space-y-1" style="background-color: var(--bg-main);">
-                        <div onclick="selectTheme('catppuccin', '🐱 Catppuccin')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition">
-                            <span>🐱 Catppuccin</span>
-                        </div>
-                        <div onclick="selectTheme('turquoise', '🩵 Turquoise')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition">
-                            <span>🩵 Turquoise</span>
-                        </div>
-                        <div onclick="selectTheme('carnation', '🌺 Carnation')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition">
-                            <span>🌺 Carnation</span>
-                        </div>
-                        <div onclick="selectTheme('cerise', '🌸 Cerise')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition">
-                            <span>🌸 Cerise</span>
-                        </div>
-                        <div onclick="selectTheme('swarm', '🐝 Swarm')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition">
-                            <span>🐝 Swarm</span>
-                        </div>
-                        <div onclick="selectTheme('meadow', '🌿 Meadow')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition">
-                            <span>🌿 Meadow</span>
-                        </div>
-                        <div onclick="selectTheme('merlin', '🧙‍♂️ Merlin')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition">
-                            <span>🧙‍♂️ Merlin</span>
-                        </div>
-                        <div onclick="selectTheme('blueviolet', '💜 Blue Violet')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition">
-                            <span>💜 Blue Violet</span>
-                        </div>
-                        <div onclick="selectTheme('monochrome', '⚪ Monochrome')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition">
-                            <span>⚪ Monochrome</span>
-                        </div>
-                        <div class="my-1 border-t border-white/10"></div>
-                        <div onclick="selectTheme('frostcontrast', '❄️ Frost Contrast')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition">
-                            <span>❄️ Frost Contrast</span>
-                        </div>
-                        <div onclick="selectTheme('inkcontrast', '🖋️ Ink Contrast')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition">
-                            <span>🖋️ Ink Contrast</span>
-                        </div>
-                        <div onclick="selectTheme('ambercontrast', '🔶 Amber Contrast')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition">
-                            <span>🔶 Amber Contrast</span>
+                    <!-- THEME DROPDOWN: scrollable theme list + AMOLED toggle fixed at the bottom -->
+                    <div id="theme-menu" class="dropdown-menu-base absolute right-0 top-full mt-3 w-44 sm:w-48 border rounded-2xl shadow-2xl p-1.5" style="background-color: var(--bg-main);">
+                        <div class="theme-list space-y-1">
+                            <div onclick="selectTheme('catppuccin', '🐱 Catppuccin')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition">
+                                <span>🐱 Catppuccin</span>
+                            </div>
+                            <div onclick="selectTheme('turquoise', '🩵 Turquoise')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition">
+                                <span>🩵 Turquoise</span>
+                            </div>
+                            <div onclick="selectTheme('carnation', '🌺 Carnation')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition">
+                                <span>🌺 Carnation</span>
+                            </div>
+                            <div onclick="selectTheme('cerise', '🌸 Cerise')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition">
+                                <span>🌸 Cerise</span>
+                            </div>
+                            <div onclick="selectTheme('swarm', '🐝 Swarm')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition">
+                                <span>🐝 Swarm</span>
+                            </div>
+                            <div onclick="selectTheme('meadow', '🌿 Meadow')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition">
+                                <span>🌿 Meadow</span>
+                            </div>
+                            <div onclick="selectTheme('merlin', '🧙‍♂️ Merlin')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition">
+                                <span>🧙‍♂️ Merlin</span>
+                            </div>
+                            <div onclick="selectTheme('blueviolet', '💜 Blue Violet')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition">
+                                <span>💜 Blue Violet</span>
+                            </div>
+                            <div onclick="selectTheme('monochrome', '⚪ Monochrome')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition">
+                                <span>⚪ Monochrome</span>
+                            </div>
+                            <div class="my-1 border-t border-white/10"></div>
+                            <div onclick="selectTheme('frostcontrast', '❄️ Frost Contrast')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition">
+                                <span>❄️ Frost Contrast</span>
+                            </div>
+                            <div onclick="selectTheme('inkcontrast', '🖋️ Ink Contrast')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition">
+                                <span>🖋️ Ink Contrast</span>
+                            </div>
+                            <div onclick="selectTheme('ambercontrast', '🔶 Amber Contrast')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition">
+                                <span>🔶 Amber Contrast</span>
+                            </div>
                         </div>
                         <div class="my-1 border-t border-white/10"></div>
                         <div class="px-3 py-2 rounded-xl flex items-center justify-between gap-2" onclick="event.stopPropagation()">
@@ -860,6 +982,9 @@
             <p class="text-[11px] sm:text-xs text-muted-custom text-center">© PomoHarbor - Productivity Workspace</p>
         </div>
     </footer>
+
+    <!-- QUICK-JUMP BAR: one button per stopwatch/timer, shown on mobile just above the bottom tab bar -->
+    <div id="quick-jump-bar" class="custom-nav no-scrollbar"></div>
 
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -1162,9 +1287,9 @@
             quickLinks.forEach((link, idx) => {
                 const itemHTML = `
                     <div class="flex items-center justify-between p-2 rounded-xl hover:bg-white/10 transition group">
-                        <a href="${link.url}" target="_blank" rel="noopener noreferrer" class="text-xs font-semibold text-slate-200 hover:text-white truncate flex-1 flex items-center gap-2">
+                        <a href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer" class="text-xs font-semibold text-slate-200 hover:text-white truncate flex-1 flex items-center gap-2">
                             <span class="text-[10px] text-muted-custom font-mono">#${idx+1}</span>
-                            <span class="truncate">${link.title}</span>
+                            <span class="truncate">${escapeHtml(link.title)}</span>
                         </a>
                         <button onclick="deleteQuickLink(${link.id})" class="text-[11px] opacity-40 group-hover:opacity-100 hover:text-red-400 p-1 transition" title="Delete link">🗑️</button>
                     </div>
@@ -1946,10 +2071,10 @@
                 let durationText = `${hours > 0 ? hours + 'h ' : ''}${minutes}m ${seconds}s`;
 
                 let itemHTML = `
-                    <div class="flex flex-wrap justify-between items-center gap-2.5 p-4 sm:p-4.5 bg-white/5 rounded-2xl border border-white/5 hover:border-white/10 transition">
+                    <div class="flex flex-wrap justify-between items-center gap-2.5 p-4 sm:p-5 bg-white/5 rounded-2xl border border-white/5 hover:border-white/10 transition">
                         <div>
-                            <span class="text-[11px] sm:text-xs font-bold px-2 py-0.5 rounded-lg bg-white/10 text-slate-300 mr-2 uppercase tracking-wider">[${entry.category}]</span>
-                            <strong class="text-slate-100 text-sm sm:text-base font-semibold">${entry.title}</strong>
+                            <span class="text-[11px] sm:text-xs font-bold px-2 py-0.5 rounded-lg bg-white/10 text-slate-300 mr-2 uppercase tracking-wider">[${escapeHtml(entry.category)}]</span>
+                            <strong class="text-slate-100 text-sm sm:text-base font-semibold">${escapeHtml(entry.title)}</strong>
                             <div class="text-xs sm:text-sm text-muted-custom mt-1.5 font-mono">${entry.date} • Last Active: ${entry.lastUpdated || entry.timestamp}</div>
                         </div>
                         <div class="mono text-sm font-bold accent-text bg-white/5 px-2.5 sm:px-3 py-1 rounded-xl border border-white/10">
@@ -2129,6 +2254,14 @@
 
             const mainContainer = document.getElementById('main-container');
             mainContainer.scrollTop = 0;
+
+            // On mobile/tablet the fade-in is disabled (animations are off
+            // there), so just swap the view instantly.
+            if (window.matchMedia('(max-width: 1024px)').matches) {
+                render();
+                return;
+            }
+
             mainContainer.style.willChange = 'opacity, transform';
             mainContainer.style.opacity = '0';
             mainContainer.style.transform = 'translateY(6px)';
@@ -2215,6 +2348,8 @@
         function addTimer() {
             const count = timers.filter(t => (t.type || 'stopwatch') === currentTab).length;
             if (count >= MAX_LIMIT) {
+                const limitTypeEl = document.getElementById('limit-type-text');
+                if (limitTypeEl) limitTypeEl.innerText = currentTab === 'stopwatch' ? 'stopwatches' : 'timers';
                 openModal('limit-modal');
                 return;
             }
@@ -2232,13 +2367,43 @@
                 const grid = document.getElementById('timers-grid');
                 const scrollArea = document.getElementById('main-container');
                 if (!grid || !scrollArea || !grid.lastElementChild) return;
-                grid.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                // Skip the smooth-scroll animation on mobile/tablet (animations off there).
+                const behavior = window.matchMedia('(max-width: 1024px)').matches ? 'auto' : 'smooth';
+                grid.lastElementChild.scrollIntoView({ behavior, block: 'end' });
             });
+        }
+
+        // --- Quick-jump bar (mobile/tablet only) ---
+        // One small numbered button per stopwatch/timer, rendered just above
+        // the bottom tab bar. Tapping a button jumps straight to that card
+        // (no scrolling the sometimes-laggy list on low-end phones).
+        function jumpToTimer(id) {
+            const el = document.getElementById('timer-card-' + id);
+            if (el) el.scrollIntoView({ behavior: 'auto', block: 'center' });
+        }
+
+        function renderQuickJumpBar() {
+            const bar = document.getElementById('quick-jump-bar');
+            if (!bar) return;
+
+            const isMobile = window.matchMedia('(max-width: 1024px)').matches;
+            const show = isMobile && (currentTab === 'stopwatch' || currentTab === 'timer');
+            if (!show) { bar.style.display = 'none'; bar.innerHTML = ''; return; }
+
+            const items = timers.filter(t => (t.type || 'stopwatch') === currentTab);
+            if (items.length === 0) { bar.style.display = 'none'; bar.innerHTML = ''; return; }
+
+            bar.style.display = 'flex';
+            bar.innerHTML = items.map((t, i) =>
+                `<button type="button" onclick="jumpToTimer(${t.id})" title="${escapeHtml(t.title || ('Item ' + (i + 1)))}" class="quick-jump-btn">${i + 1}</button>`
+            ).join('');
         }
 
         function addPresetTimer(minutes, title) {
             const count = timers.filter(t => (t.type || 'stopwatch') === 'timer').length;
             if (count >= MAX_LIMIT) {
+                const limitTypeEl = document.getElementById('limit-type-text');
+                if (limitTypeEl) limitTypeEl.innerText = 'timers';
                 openModal('limit-modal');
                 return;
             }
@@ -2396,6 +2561,7 @@
         function closeModal(id) { document.getElementById(id).classList.add('opacity-0', 'pointer-events-none'); }
 
         function render() {
+            renderQuickJumpBar();
             const mainContainer = document.getElementById('main-container');
             const grid = document.getElementById('timers-grid');
             const pomoContainer = document.getElementById('pomodoro-container');
@@ -2492,7 +2658,7 @@
                     <div>
                         <div class="flex justify-between items-center mb-3">
                             <div class="flex items-center space-x-2 w-8/12 group">
-                                <input type="text" value="${timer.title}" onchange="timers.find(t=>t.id===${timer.id}).title=this.value; save();" class="bg-transparent font-bold outline-none w-full text-xs tracking-wider uppercase text-muted-custom border-b border-transparent focus:border-current hover:border-white/20 transition" placeholder="Rename title..." />
+                                <input type="text" value="${escapeHtml(timer.title)}" onchange="timers.find(t=>t.id===${timer.id}).title=this.value; save();" class="bg-transparent font-bold outline-none w-full text-xs tracking-wider uppercase text-muted-custom border-b border-transparent focus:border-current hover:border-white/20 transition" placeholder="Rename title..." />
                             </div>
                             <div class="flex items-center space-x-1">
                                 <select onchange="timers.find(t=>t.id===${timer.id}).category=this.value; save();" class="bg-transparent text-[10px] lg:text-sm text-muted-custom font-semibold outline-none cursor-pointer border rounded-lg lg:rounded-xl px-1.5 lg:px-2.5 py-0.5 lg:py-1.5 border-white/10 hover:border-white/20">
@@ -2531,7 +2697,7 @@
                                     const lapId = typeof lap === 'object' ? lap.id : Date.now();
                                     return `
                                         <div class="flex justify-between items-center text-muted-custom px-2 py-1 hover:bg-white/5 rounded-xl transition">
-                                            <input type="text" value="${lapName}" onchange="renameLap(${timer.id}, ${lapId}, this.value)" class="bg-transparent text-muted-custom focus:text-white font-medium outline-none border-b border-transparent focus:border-current w-1/2" placeholder="Split name..." />
+                                            <input type="text" value="${escapeHtml(lapName)}" onchange="renameLap(${timer.id}, ${lapId}, this.value)" class="bg-transparent text-muted-custom focus:text-white font-medium outline-none border-b border-transparent focus:border-current w-1/2" placeholder="Split name..." />
                                             <span class="accent-text font-bold">${formatLapTime(lapTime)}</span>
                                         </div>
                                     `;
@@ -2580,6 +2746,7 @@
             const stillHasCards = timers.some(t => (t.type || 'stopwatch') === currentTab);
             if (cardEl && stillHasCards) {
                 cardEl.remove();
+                renderQuickJumpBar();
             } else {
                 render();
             }
@@ -2827,5 +2994,5 @@
         // Always runs, regardless of whether Cloud Sync above succeeded.
         render();
     </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a22571e27990d5ee',t:'MTc4NTI1ODA3Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a225a1e2ca24897b',t:'MTc4NTI2MDA0Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
