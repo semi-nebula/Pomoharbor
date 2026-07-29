@@ -723,9 +723,6 @@
             /* 4) Remove the interactive mascot on mobile & tablet. */
             #mascot-container { display: none !important; }
 
-            /* 4) Remove the interactive mascot on mobile & tablet. */
-            #mascot-container { display: none !important; }
-
             /* Custom background is now inside the Theme menu on mobile, so
                hide the floating FAB and reclaim the space it reserved. */
             #custom-bg-wrap { display: none !important; }
@@ -1278,39 +1275,39 @@
 
     <!-- MOBILE: More bottom sheet -->
     <div id="mobile-more-backdrop" onclick="closeMobileMoreSheet()" class="fixed inset-0 bg-black/60 z-[110] opacity-0 pointer-events-none transition-opacity duration-200 lg:hidden"></div>
-    <div id="mobile-more-sheet" class="fixed left-0 right-0 bottom-0 z-[120] custom-card rounded-t-3xl border-t border-x p-5 transform translate-y-full transition-transform duration-150 lg:hidden" style="max-height: 75vh;">
+    <div id="mobile-more-sheet" class="fixed left-0 right-0 bottom-0 z-[120] custom-card rounded-t-3xl border-t border-x p-5 pb-[max(2.5rem,env(safe-area-inset-bottom))] transform translate-y-full transition-transform duration-150 lg:hidden">
         <div class="w-10 h-1 bg-white/20 rounded-full mx-auto mb-4"></div>
-        <div class="grid grid-cols-3 gap-3">
-            <button onclick="closeMobileMoreSheet(); switchTab('flowtunes');" class="mobile-more-item">
+        <div id="mobile-more-grid" class="grid grid-cols-3 gap-3">
+            <button type="button" data-action="flowtunes" class="mobile-more-item">
                 <span class="text-xl">🎵</span>
                 <span class="text-[10px] font-bold mt-1">Flowtunes</span>
             </button>
-            <button onclick="closeMobileMoreSheet(); switchTab('groups');" class="mobile-more-item">
+            <button type="button" data-action="groups" class="mobile-more-item">
                 <span class="text-xl">👥</span>
                 <span class="text-[10px] font-bold mt-1">Groups</span>
             </button>
-            <button onclick="closeMobileMoreSheet(); openSearchPanel();" class="mobile-more-item">
+            <button type="button" data-action="search" class="mobile-more-item">
                 <span class="text-xl">🔍</span>
                 <span class="text-[10px] font-bold mt-1">Search</span>
             </button>
-            <button onclick="closeMobileMoreSheet(); openNotificationsPanel();" class="mobile-more-item">
+            <button type="button" data-action="notifications" class="mobile-more-item">
                 <span class="text-xl">🔔</span>
                 <span class="text-[10px] font-bold mt-1">Notifications</span>
             </button>
-            <button onclick="closeMobileMoreSheet(); cycleLayoutShortcut();" class="mobile-more-item">
+            <button type="button" data-action="layout" class="mobile-more-item">
                 <span class="text-xl">田</span>
                 <span class="text-[10px] font-bold mt-1">Layout</span>
             </button>
-            <button onclick="closeMobileMoreSheet(); openModal('settings-modal');" class="mobile-more-item">
+            <button type="button" data-action="settings" class="mobile-more-item">
                 <span class="text-xl">⚙️</span>
                 <span class="text-[10px] font-bold mt-1">Settings</span>
             </button>
-            <button onclick="closeMobileMoreSheet(); openProfilePanel();" class="mobile-more-item">
+            <button type="button" data-action="profile" class="mobile-more-item">
                 <span class="text-xl">👤</span>
                 <span class="text-[10px] font-bold mt-1">Profile</span>
             </button>
         </div>
-        <button onclick="closeMobileMoreSheet()" class="w-full mt-4 py-3 custom-nav border rounded-2xl text-xs font-bold text-muted-custom">Cancel</button>
+        <div id="mobile-more-cancel" role="button" tabindex="0" class="w-full mt-5 py-4 custom-nav border rounded-2xl text-sm font-bold text-muted-custom min-h-[52px] flex items-center justify-center relative z-10 select-none">Cancel</div>
     </div>
 
     <!-- PROFILE SLIDE-OVER PANEL -->
@@ -1422,6 +1419,35 @@
                     </button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- SEARCH SLIDE-OVER PANEL -->
+    <div id="search-panel-backdrop" onclick="closeSearchPanel()" class="slide-over-backdrop"></div>
+    <div id="search-panel" class="slide-over-panel">
+        <div class="panel-header">
+            <h3 class="panel-title">🔍 Search</h3>
+            <button onclick="closeSearchPanel()" class="text-muted-custom hover:text-white text-lg leading-none">✕</button>
+        </div>
+        <div class="panel-content space-y-3">
+            <input id="search-input" type="text" placeholder="Search timers, tasks, groups, users, settings..." oninput="debouncedSearch()" class="w-full custom-nav border rounded-xl px-3 py-2.5 text-xs outline-none text-white placeholder:text-muted-custom">
+            <div id="search-results" class="space-y-4 overflow-y-auto pr-0.5" style="max-height: calc(100dvh - 12rem);"></div>
+        </div>
+    </div>
+
+    <!-- NOTIFICATIONS SLIDE-OVER PANEL -->
+    <div id="notifications-panel-backdrop" onclick="closeNotificationsPanel()" class="slide-over-backdrop"></div>
+    <div id="notifications-panel" class="slide-over-panel">
+        <div class="panel-header">
+            <h3 class="panel-title">🔔 Notifications</h3>
+            <button onclick="closeNotificationsPanel()" class="text-muted-custom hover:text-white text-lg leading-none">✕</button>
+        </div>
+        <div class="panel-content space-y-3">
+            <div class="flex items-center justify-between gap-2">
+                <button id="notif-perm-btn" onclick="requestNotificationPerm()" class="px-3 py-1.5 custom-nav border text-[11px] rounded-xl font-bold text-muted-custom hover:text-white">Enable push alerts</button>
+                <button onclick="markAllNotificationsRead()" class="px-3 py-1.5 custom-btn text-[11px] rounded-xl font-bold">Mark all read</button>
+            </div>
+            <div id="notifications-list" class="space-y-2 overflow-y-auto pr-0.5" style="max-height: calc(100dvh - 13rem);"></div>
         </div>
     </div>
 
@@ -1693,6 +1719,11 @@
         let viewOnlyProfile = null;
         const MAX_GROUPS = 3;
 
+        // Notifications state
+        let notifications = [];
+        let notificationsListener = null;
+        let notifiedNotificationIds = new Set();
+
         function usernameToEmail(username) {
             return username.toLowerCase().trim() + '@pomoharbor.local';
         }
@@ -1860,7 +1891,6 @@
         const ROOM_TTL_DAYS = 10;
         const ROOM_TTL_MS = ROOM_TTL_DAYS * 24 * 60 * 60 * 1000;
         let pendingAccountUid = null;
-        let isAuthenticating = false;
         let privateMode = false;
 
         function loadPrivateMode() {
@@ -1905,7 +1935,6 @@
 
         function resolveAccountDataConflict(choice) {
             closeModal('account-data-modal');
-            isAuthenticating = false;
             if (!pendingAccountUid) return;
             // Always redirect to the account's home room; local-vs-cloud merge
             // is handled automatically by the room listener once we land there.
@@ -1952,21 +1981,6 @@
             }, 4500);
         }
 
-        const themeLabels = {
-            'catppuccin': '🐱 Catppuccin',
-            'turquoise': '🩵 Turquoise',
-            'carnation': '🌺 Carnation',
-            'cerise': '🌸 Cerise',
-            'swarm': '🐝 Swarm',
-            'meadow': '🌿 Meadow',
-            'merlin': '🧙‍♂️ Merlin',
-            'blueviolet': '💜 Blue Violet',
-            'monochrome': '⚪ Monochrome',
-            'frostcontrast': '❄️ Frost Contrast',
-            'inkcontrast': '🖋️ Ink Contrast',
-            'ambercontrast': '🔶 Amber Contrast'
-        };
-
         const layoutConfig = {
             'grid': { icon: '田', label: 'Grid View', next: 'focus' },
             'focus': { icon: '🎯', label: 'Focus Stack', next: 'horizontal' },
@@ -1983,6 +1997,10 @@
                 closeQuickLinksMenu();
                 closeSyncMenu();
                 closeMobileMoreSheet();
+                closeSearchPanel();
+                closeNotificationsPanel();
+                closeProfilePanel();
+                closeHelpPanel();
             }
         });
 
@@ -2145,8 +2163,10 @@
             if ("Notification" in window) {
                 Notification.requestPermission().then(permission => {
                     const btn = document.getElementById('notif-btn');
+                    const permBtn = document.getElementById('notif-perm-btn');
                     if (permission === "granted") {
                         if (btn) btn.innerText = "Enabled ✓";
+                        if (permBtn) { permBtn.innerText = 'Push enabled ✓'; permBtn.disabled = true; permBtn.classList.add('opacity-60'); }
                         showToast("Notifications Enabled!");
                         new Notification("PomoHarbor", { body: "Desktop Notifications active!" });
                     } else {
@@ -2338,14 +2358,11 @@
         // deliberately deferred to the bottom of the CUSTOM BACKGROUND
         // section below - it calls refreshBodyBackground(), which reads
         // customBgs/activeCustomBgId, and those aren't declared yet here.
-        let translucentModeOn = false;
-
         function applyTranslucentMode(isOn) {
             if (isOn) document.documentElement.classList.add('translucent-mode');
             else document.documentElement.classList.remove('translucent-mode');
             const toggleEl = document.getElementById('translucent-toggle');
             if (toggleEl) toggleEl.checked = !!isOn;
-            translucentModeOn = !!isOn;
         }
 
         function toggleTranslucentMode(isOn) {
@@ -3002,16 +3019,76 @@
         function openMobileMoreSheet() {
             const backdrop = document.getElementById('mobile-more-backdrop');
             const sheet = document.getElementById('mobile-more-sheet');
+            const nav = document.getElementById('mobile-nav-tabs');
             if (backdrop) { backdrop.classList.remove('opacity-0', 'pointer-events-none'); }
-            if (sheet) { sheet.classList.remove('translate-y-full'); }
+            if (sheet) { sheet.classList.remove('translate-y-full', 'pointer-events-none'); }
+            if (nav) { nav.classList.add('pointer-events-none'); }
         }
 
         function closeMobileMoreSheet() {
             const backdrop = document.getElementById('mobile-more-backdrop');
             const sheet = document.getElementById('mobile-more-sheet');
+            const nav = document.getElementById('mobile-nav-tabs');
             if (backdrop) { backdrop.classList.add('opacity-0', 'pointer-events-none'); }
-            if (sheet) { sheet.classList.add('translate-y-full'); }
+            if (sheet) { sheet.classList.add('translate-y-full', 'pointer-events-none'); }
+            if (nav) { nav.classList.remove('pointer-events-none'); }
         }
+
+        // Handle all More-sheet actions in JS so taps close the sheet immediately
+        // and the delayed 300 ms click cannot fall through to the bottom nav.
+        (function setupMobileMoreSheet() {
+            const grid = document.getElementById('mobile-more-grid');
+            const cancel = document.getElementById('mobile-more-cancel');
+
+            function runAction(action) {
+                closeMobileMoreSheet();
+                switch (action) {
+                    case 'flowtunes': switchTab('flowtunes'); break;
+                    case 'groups': switchTab('groups'); break;
+                    case 'search': openSearchPanel(); break;
+                    case 'notifications': openNotificationsPanel(); break;
+                    case 'layout': cycleLayoutShortcut(); break;
+                    case 'settings': openModal('settings-modal'); break;
+                    case 'profile': openProfilePanel(); break;
+                }
+            }
+
+            if (grid) {
+                grid.addEventListener('touchend', function(e) {
+                    const btn = e.target.closest('[data-action]');
+                    if (!btn) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    runAction(btn.dataset.action);
+                }, { passive: false });
+                grid.addEventListener('click', function(e) {
+                    const btn = e.target.closest('[data-action]');
+                    if (!btn) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    runAction(btn.dataset.action);
+                });
+            }
+
+            if (cancel) {
+                cancel.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeMobileMoreSheet();
+                }, { passive: false });
+                cancel.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeMobileMoreSheet();
+                });
+                cancel.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        closeMobileMoreSheet();
+                    }
+                });
+            }
+        })();
 
         function switchTab(tab) {
             if (currentTab === tab) return;
@@ -3544,7 +3621,6 @@
                 const sessionNum = document.getElementById('pomo-session-num');
                 const sessionTotal = document.getElementById('pomo-session-total');
                 const startBtn = document.getElementById('pomo-start-btn');
-                const startLabel = document.getElementById('pomo-start-label');
                 const pauseBtn = document.getElementById('pomo-pause-btn');
                 const pauseLabel = document.getElementById('pomo-pause-label');
 
@@ -3989,6 +4065,7 @@
                     updateMyPublicState();
                     renderHeaderAvatar();
                     renderProfilePanel();
+                    attachNotificationsListener(user.uid);
                     groupsUIRendered = false;
                     renderGroupsUI(true);
                     if (currentTab === 'groups') render();
@@ -3999,6 +4076,7 @@
                     updatePrivacyToggleUI();
                     renderHeaderAvatar();
                     renderProfilePanel();
+                    detachNotificationsListener();
                     detachAllGroupListeners();
                     groupsUIRendered = false;
                     renderGroupsUI(true);
@@ -4057,7 +4135,6 @@
             if (password.length < 6) { errEl.innerText = 'Password must be at least 6 characters.'; return; }
             if (password !== confirm) { errEl.innerText = 'Passwords do not match.'; return; }
 
-            isAuthenticating = true;
             try {
                 const usernameSnap = await firebase.database().ref('usernames/' + username).once('value');
                 if (usernameSnap.exists()) { errEl.innerText = 'Username already taken.'; return; }
@@ -4076,7 +4153,6 @@
                 userProfile = profile;
                 await linkAccountToCurrentRoom(uid);
             } catch (e) {
-                isAuthenticating = false;
                 errEl.innerText = e.message || 'Sign up failed.';
             }
         }
@@ -4089,7 +4165,6 @@
             errEl.innerText = '';
             if (!username || !password) { errEl.innerText = 'Please enter username and password.'; return; }
 
-            isAuthenticating = true;
             try {
                 const email = usernameToEmail(username);
                 await firebase.auth().setPersistence(rememberMe ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION);
@@ -4120,7 +4195,6 @@
                 closeModal('auth-modal');
                 window.location.reload();
             } catch (e) {
-                isAuthenticating = false;
                 errEl.innerText = e.message || 'Login failed.';
             }
         }
@@ -4225,6 +4299,15 @@
                     color: userProfile.color,
                     timestamp: firebase.database.ServerValue.TIMESTAMP
                 });
+                await sendNotification(targetUid, {
+                    type: 'friend_request',
+                    title: 'New friend request',
+                    body: `${userProfile.name} (@${userProfile.username}) wants to add you as a friend.`,
+                    fromUid: authUser.uid,
+                    fromName: userProfile.name,
+                    fromUsername: userProfile.username,
+                    fromColor: userProfile.color
+                });
                 closeModal('add-friend-modal');
                 document.getElementById('add-friend-username').value = '';
                 showToast('Friend request sent!');
@@ -4248,6 +4331,7 @@
                 await firebase.database().ref('users/' + authUser.uid + '/friends/' + fromUid).set(true);
                 await firebase.database().ref('users/' + fromUid + '/friends/' + authUser.uid).set(true);
                 await firebase.database().ref('users/' + authUser.uid + '/friendRequests/' + fromUid).remove();
+                await deleteNotificationByType('friend_request', fromUid);
                 showToast('Friend added!');
                 renderGroupsUI();
             } catch (e) {
@@ -4259,6 +4343,7 @@
             if (!authUser) return;
             try {
                 await firebase.database().ref('users/' + authUser.uid + '/friendRequests/' + fromUid).remove();
+                await deleteNotificationByType('friend_request', fromUid);
                 renderGroupsUI();
             } catch (e) {}
         }
@@ -4332,13 +4417,14 @@
                 if (!snap.exists()) { errEl.innerText = 'User not found.'; return; }
                 const targetUid = snap.val();
 
-                const [memberSnap, targetGroupsSnap] = await Promise.all([
+                const [memberSnap, targetGroupsSnap, existingInviteSnap] = await Promise.all([
                     firebase.database().ref('groups/' + currentGroupId + '/members').once('value'),
-                    firebase.database().ref('users/' + targetUid + '/groups').once('value')
+                    firebase.database().ref('users/' + targetUid + '/groups').once('value'),
+                    firebase.database().ref('users/' + targetUid + '/groupInvites/' + currentGroupId).once('value')
                 ]);
                 const members = memberSnap.val() || {};
                 if (members[targetUid]) { errEl.innerText = 'User is already in this group.'; return; }
-                if (Object.keys(members).length >= MAX_GROUP_MEMBERS) { errEl.innerText = 'Group is full (max ' + MAX_GROUP_MEMBERS + ').'; return; }
+                if (existingInviteSnap.exists()) { errEl.innerText = 'Invite already sent.'; return; }
 
                 const targetGroups = targetGroupsSnap.val() || {};
                 if (Object.keys(targetGroups).length >= MAX_GROUPS) { errEl.innerText = 'This user is already in ' + MAX_GROUPS + ' groups.'; return; }
@@ -4346,12 +4432,24 @@
                 const groupMetaSnap = await firebase.database().ref('groups/' + currentGroupId + '/meta').once('value');
                 const groupName = groupMetaSnap.val()?.name || 'Group';
 
-                await firebase.database().ref('groups/' + currentGroupId + '/members/' + targetUid).set(true);
-                await firebase.database().ref('users/' + targetUid + '/groups/' + currentGroupId).set({ name: groupName });
+                await firebase.database().ref('users/' + targetUid + '/groupInvites/' + currentGroupId).set({
+                    name: groupName,
+                    fromUid: authUser.uid,
+                    fromName: userProfile.name,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+                await sendNotification(targetUid, {
+                    type: 'group_invite',
+                    title: 'Group invite',
+                    body: `${userProfile.name} invited you to join "${groupName}".`,
+                    groupId: currentGroupId,
+                    groupName: groupName,
+                    fromUid: authUser.uid,
+                    fromName: userProfile.name
+                });
 
                 document.getElementById('invite-username').value = '';
-                showToast('Member added!');
-                openGroup(currentGroupId);
+                showToast('Invite sent!');
             } catch (e) {
                 errEl.innerText = e.message || 'Could not invite user.';
             }
@@ -4545,11 +4643,11 @@
                     const profileRef = firebase.database().ref('users/' + uid + '/profile');
                     const stateRef = firebase.database().ref('publicState/' + uid);
 
-                    const profileListener = profileRef.on('value', (snap) => {
+                    profileRef.on('value', (snap) => {
                         const profile = snap.val() || {};
                         renderMemberWidget(widget, uid, profile, null);
                     });
-                    const stateListener = stateRef.on('value', (snap) => {
+                    stateRef.on('value', (snap) => {
                         const state = snap.val() || {};
                         const profileRef2 = document.getElementById('member-profile-' + uid);
                         const profile = profileRef2 ? JSON.parse(profileRef2.dataset.profile || '{}') : {};
@@ -4824,15 +4922,452 @@
             if (header) header.classList.toggle('open');
         }
 
+        // ============================================================
+        // SEARCH PANEL
+        // ============================================================
+        let searchDataCache = { groups: null, usernames: null, loadedAt: 0 };
+        let searchDebounceTimer = null;
+
         function openSearchPanel() {
-            showToast('Search coming soon');
+            const panel = document.getElementById('search-panel');
+            const backdrop = document.getElementById('search-panel-backdrop');
+            const input = document.getElementById('search-input');
+            if (panel) panel.classList.add('open');
+            if (backdrop) backdrop.classList.add('open');
+            if (input) {
+                input.value = '';
+                setTimeout(() => input.focus(), 50);
+            }
+            loadSearchData();
+            renderSearchResults('');
         }
-        function closeSearchPanel() {}
+
+        function closeSearchPanel() {
+            const panel = document.getElementById('search-panel');
+            const backdrop = document.getElementById('search-panel-backdrop');
+            if (panel) panel.classList.remove('open');
+            if (backdrop) backdrop.classList.remove('open');
+        }
+
+        function debouncedSearch() {
+            if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(() => {
+                const query = document.getElementById('search-input')?.value || '';
+                renderSearchResults(query);
+            }, 120);
+        }
+
+        async function loadSearchData() {
+            if (!authUser || !firebase.database) return;
+            const now = Date.now();
+            if (now - searchDataCache.loadedAt < 60000 && searchDataCache.groups && searchDataCache.usernames) return;
+
+            try {
+                const [groupsSnap, usernamesSnap] = await Promise.all([
+                    firebase.database().ref('users/' + authUser.uid + '/groups').once('value'),
+                    firebase.database().ref('usernames').once('value')
+                ]);
+                searchDataCache.groups = groupsSnap.val() || {};
+                const usernames = usernamesSnap.val() || {};
+                // Exclude self from username search
+                if (userProfile && userProfile.username) {
+                    delete usernames[userProfile.username.toLowerCase()];
+                }
+                searchDataCache.usernames = usernames;
+                searchDataCache.loadedAt = now;
+                renderSearchResults(document.getElementById('search-input')?.value || '');
+            } catch (e) {
+                // Silent fail; local-only search still works
+            }
+        }
+
+        function renderSearchResults(query) {
+            const container = document.getElementById('search-results');
+            if (!container) return;
+
+            const q = query.trim().toLowerCase();
+            let html = '';
+
+            // 1) Timers / Stopwatches
+            const timerMatches = timers.filter(t => {
+                const text = ((t.title || '') + ' ' + (t.category || '')).toLowerCase();
+                return !q || text.includes(q);
+            });
+            if (timerMatches.length > 0) {
+                html += `<div class="text-[10px] font-extrabold uppercase tracking-wider text-muted-custom mb-1">⏱️ Timers & Stopwatches</div>`;
+                html += `<div class="space-y-1.5">`;
+                timerMatches.forEach(t => {
+                    const icon = (t.type || 'stopwatch') === 'stopwatch' ? '⏱️' : '⏳';
+                    html += `
+                        <button onclick="closeSearchPanel(); switchTab('${t.type || 'stopwatch'}'); jumpToTimer(${t.id});" class="w-full text-left panel-menu-item">
+                            <span class="text-base">${icon}</span>
+                            <div class="flex-1 min-w-0">
+                                <div class="text-xs font-semibold truncate">${escapeHtml(t.title || 'Untitled')}</div>
+                                <div class="text-[10px] text-muted-custom">${escapeHtml(t.category || 'General')}</div>
+                            </div>
+                        </button>
+                    `;
+                });
+                html += `</div>`;
+            }
+
+            // 2) Tasks
+            const todos = getTodos();
+            const taskMatches = todos.filter(t => !q || (t.text || '').toLowerCase().includes(q));
+            if (taskMatches.length > 0) {
+                html += `<div class="text-[10px] font-extrabold uppercase tracking-wider text-muted-custom mb-1 mt-4">✅ Tasks</div>`;
+                html += `<div class="space-y-1.5">`;
+                taskMatches.forEach(t => {
+                    html += `
+                        <button onclick="closeSearchPanel(); window.location.href='todo.html?t=' + Date.now() + window.location.hash;" class="w-full text-left panel-menu-item ${t.done ? 'opacity-60' : ''}">
+                            <span class="text-base">${t.done ? '✅' : '⬜'}</span>
+                            <span class="text-xs font-semibold truncate">${escapeHtml(t.text || 'Untitled task')}</span>
+                        </button>
+                    `;
+                });
+                html += `</div>`;
+            }
+
+            // 3) Groups
+            if (authUser && searchDataCache.groups) {
+                const groups = searchDataCache.groups;
+                const groupMatches = Object.entries(groups).filter(([gid, meta]) => {
+                    return !q || (meta.name || '').toLowerCase().includes(q);
+                });
+                if (groupMatches.length > 0) {
+                    html += `<div class="text-[10px] font-extrabold uppercase tracking-wider text-muted-custom mb-1 mt-4">👥 Groups</div>`;
+                    html += `<div class="space-y-1.5">`;
+                    groupMatches.forEach(([gid, meta]) => {
+                        html += `
+                            <button onclick="closeSearchPanel(); openGroup('${gid}');" class="w-full text-left panel-menu-item">
+                                <span class="text-base">👥</span>
+                                <span class="text-xs font-semibold truncate">${escapeHtml(meta.name || 'Group')}</span>
+                            </button>
+                        `;
+                    });
+                    html += `</div>`;
+                }
+            }
+
+            // 4) Users — only show an exact username match (case-insensitive).
+            // A leading "@" is ignored so typing "@billi" still finds "billi".
+            if (authUser && searchDataCache.usernames && q) {
+                const normalizedQ = q.replace(/^@/, '').toLowerCase();
+                const usernameMatches = Object.entries(searchDataCache.usernames).filter(([username, uid]) => {
+                    return username.toLowerCase() === normalizedQ;
+                });
+                if (usernameMatches.length > 0) {
+                    html += `<div class="text-[10px] font-extrabold uppercase tracking-wider text-muted-custom mb-1 mt-4">👤 Users</div>`;
+                    html += `<div class="space-y-1.5">`;
+                    usernameMatches.forEach(([username, uid]) => {
+                        html += renderUserSearchResult(username, uid);
+                    });
+                    html += `</div>`;
+                }
+            }
+
+            // 5) Settings
+            const settingMatches = getSettingMatches(q);
+            if (settingMatches.length > 0) {
+                html += `<div class="text-[10px] font-extrabold uppercase tracking-wider text-muted-custom mb-1 mt-4">⚙️ Settings</div>`;
+                html += `<div class="space-y-1.5">`;
+                settingMatches.forEach(s => {
+                    html += `
+                        <button onclick="closeSearchPanel(); openModal('settings-modal');" class="w-full text-left panel-menu-item">
+                            <span class="text-base">⚙️</span>
+                            <span class="text-xs font-semibold">${escapeHtml(s.label)}</span>
+                        </button>
+                    `;
+                });
+                html += `</div>`;
+            }
+
+            if (!html) {
+                html = `<p class="text-xs text-muted-custom text-center py-8">${q ? 'No matches found.' : 'Start typing to search timers, tasks, groups, settings — or type a username to find people.'}</p>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function renderUserSearchResult(username, uid) {
+            return `
+                <div id="search-user-${uid}" class="panel-menu-item cursor-default">
+                    <span class="text-base">👤</span>
+                    <div class="flex-1 min-w-0">
+                        <div class="text-xs font-semibold truncate">@${escapeHtml(username)}</div>
+                    </div>
+                    <button data-uid="${uid}" data-username="${escapeHtml(username)}" class="search-user-action px-2.5 py-1 custom-btn text-[10px] rounded-lg font-bold">View</button>
+                </div>
+            `;
+        }
+
+        async function handleSearchUserAction(e) {
+            const btn = e.target.closest('.search-user-action');
+            if (!btn) return;
+            const uid = btn.dataset.uid;
+            const username = btn.dataset.username;
+            if (!authUser || !uid) return;
+            e.stopPropagation();
+            try {
+                const friendsSnap = await firebase.database().ref('users/' + authUser.uid + '/friends/' + uid).once('value');
+                if (friendsSnap.exists()) {
+                    closeSearchPanel();
+                    openMemberDashboard(uid);
+                } else {
+                    document.getElementById('add-friend-username').value = username;
+                    closeSearchPanel();
+                    openModal('add-friend-modal');
+                }
+            } catch (err) {
+                showToast('Could not load friend status');
+            }
+        }
+
+        function getSettingMatches(q) {
+            const settings = [
+                { label: 'Alarm Tone', keywords: 'alarm sound tone beep chime bell digital' },
+                { label: 'Repeat Alarm', keywords: 'repeat alarm loop' },
+                { label: 'Volume', keywords: 'volume sound loud quiet' },
+                { label: 'Desktop Notifications', keywords: 'notifications desktop notify alert' },
+                { label: 'Layout Alignment', keywords: 'layout grid focus horizontal carousel' },
+                { label: 'Show Milliseconds', keywords: 'milliseconds ms timer display' },
+                { label: 'Compact Card View', keywords: 'compact view card small' },
+                { label: 'Clock Font Style', keywords: 'font clock style mono digital' },
+                { label: 'Keep Screen Awake', keywords: 'wake lock screen awake sleep' }
+            ];
+            if (!q) return [];
+            return settings.filter(s => s.label.toLowerCase().includes(q) || s.keywords.includes(q));
+        }
+
+        // --- Group invite accept/decline ---
+
+        async function acceptGroupInvite(groupId, notifId) {
+            if (!authUser || !groupId) return;
+            try {
+                const [membersSnap, myGroupsSnap, groupMetaSnap] = await Promise.all([
+                    firebase.database().ref('groups/' + groupId + '/members').once('value'),
+                    firebase.database().ref('users/' + authUser.uid + '/groups').once('value'),
+                    firebase.database().ref('groups/' + groupId + '/meta').once('value')
+                ]);
+                const members = membersSnap.val() || {};
+                if (members[authUser.uid]) { showToast('You are already in this group.'); }
+                else if (Object.keys(members).length >= MAX_GROUP_MEMBERS) { showToast('Group is full.'); }
+                else {
+                    const myGroups = myGroupsSnap.val() || {};
+                    if (Object.keys(myGroups).length >= MAX_GROUPS) { showToast('You can only be in ' + MAX_GROUPS + ' groups.'); return; }
+                    const groupName = groupMetaSnap.val()?.name || 'Group';
+                    await firebase.database().ref('groups/' + groupId + '/members/' + authUser.uid).set(true);
+                    await firebase.database().ref('users/' + authUser.uid + '/groups/' + groupId).set({ name: groupName });
+                    showToast('Joined group!');
+                }
+                await firebase.database().ref('users/' + authUser.uid + '/groupInvites/' + groupId).remove();
+                if (notifId) await deleteNotification(notifId);
+                renderGroupsUI();
+            } catch (e) {
+                showToast('Could not join group.');
+            }
+        }
+
+        async function declineGroupInvite(groupId, notifId) {
+            if (!authUser || !groupId) return;
+            try {
+                await firebase.database().ref('users/' + authUser.uid + '/groupInvites/' + groupId).remove();
+                if (notifId) await deleteNotification(notifId);
+                showToast('Invite declined');
+            } catch (e) {}
+        }
+
+        // --- Notifications system ---
+
+        function attachNotificationsListener(uid) {
+            if (!uid || !firebase.database) return;
+            detachNotificationsListener();
+            const ref = firebase.database().ref('users/' + uid + '/notifications');
+            notificationsListener = ref;
+            ref.orderByChild('createdAt').limitToLast(50).on('value', (snap) => {
+                const val = snap.val() || {};
+                notifications = Object.entries(val).map(([id, n]) => ({ id, ...n })).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                updateNotificationBadge();
+                renderNotificationsPanel();
+                notifications.forEach(n => {
+                    if (!n.read && !notifiedNotificationIds.has(n.id)) {
+                        notifiedNotificationIds.add(n.id);
+                        showLocalNotification(n);
+                    }
+                });
+            }, () => {});
+        }
+
+        function detachNotificationsListener() {
+            if (notificationsListener) { notificationsListener.off(); notificationsListener = null; }
+            notifications = [];
+            updateNotificationBadge();
+        }
+
+        async function sendNotification(toUid, payload) {
+            if (!toUid || !firebase.database) return;
+            try {
+                const notifRef = firebase.database().ref('users/' + toUid + '/notifications').push();
+                await notifRef.set({
+                    ...payload,
+                    read: false,
+                    createdAt: firebase.database.ServerValue.TIMESTAMP
+                });
+                pruneNotifications(toUid);
+            } catch (e) {
+                console.warn('sendNotification failed', e);
+            }
+        }
+
+        async function pruneNotifications(uid) {
+            try {
+                const snap = await firebase.database().ref('users/' + uid + '/notifications').orderByChild('createdAt').once('value');
+                const val = snap.val() || {};
+                const entries = Object.entries(val).sort((a, b) => (a[1].createdAt || 0) - (b[1].createdAt || 0));
+                if (entries.length > 50) {
+                    const updates = {};
+                    entries.slice(0, entries.length - 50).forEach(([id]) => {
+                        updates['users/' + uid + '/notifications/' + id] = null;
+                    });
+                    await firebase.database().ref().update(updates);
+                }
+            } catch (e) {}
+        }
+
+        async function deleteNotification(id) {
+            if (!authUser || !firebase.database || !id) return;
+            try { await firebase.database().ref('users/' + authUser.uid + '/notifications/' + id).remove(); } catch (e) {}
+        }
+
+        async function deleteNotificationByType(type, fromUid) {
+            if (!authUser || !type) return;
+            const matches = notifications.filter(n => n.type === type && (!fromUid || n.fromUid === fromUid));
+            if (matches.length === 0) return;
+            const updates = {};
+            matches.forEach(n => { updates['users/' + authUser.uid + '/notifications/' + n.id] = null; });
+            try { await firebase.database().ref().update(updates); } catch (e) {}
+        }
+
+        function markNotificationRead(id) {
+            if (!authUser || !firebase.database || !id) return;
+            firebase.database().ref('users/' + authUser.uid + '/notifications/' + id + '/read').set(true).catch(() => {});
+        }
+
+        function markAllNotificationsRead() {
+            if (!authUser || !firebase.database || notifications.length === 0) return;
+            const updates = {};
+            notifications.forEach(n => { if (!n.read) updates['users/' + authUser.uid + '/notifications/' + n.id + '/read'] = true; });
+            firebase.database().ref().update(updates).catch(() => {});
+        }
+
+        function updateNotificationBadge() {
+            const badge = document.getElementById('notif-badge');
+            if (!badge) return;
+            const unread = notifications.filter(n => !n.read).length;
+            badge.classList.toggle('hidden', unread === 0);
+        }
+
+        function showLocalNotification(n) {
+            const panelOpen = document.getElementById('notifications-panel')?.classList.contains('open');
+            if (document.visibilityState === 'visible' && panelOpen) return;
+            if (!("Notification" in window) || Notification.permission !== 'granted') return;
+            try {
+                new Notification(n.title || 'PomoHarbor', { body: n.body || '', tag: n.id });
+            } catch (e) {}
+        }
+
+        function formatRelativeTime(ts) {
+            const diff = Date.now() - ts;
+            const sec = Math.floor(diff / 1000);
+            if (sec < 60) return 'now';
+            const min = Math.floor(sec / 60);
+            if (min < 60) return min + 'm';
+            const hr = Math.floor(min / 60);
+            if (hr < 24) return hr + 'h';
+            return Math.floor(hr / 24) + 'd';
+        }
+
+        function renderNotificationsPanel() {
+            const list = document.getElementById('notifications-list');
+            const permBtn = document.getElementById('notif-perm-btn');
+            if (permBtn) {
+                if (!("Notification" in window)) {
+                    permBtn.classList.add('hidden');
+                } else if (Notification.permission === 'granted') {
+                    permBtn.innerText = 'Push enabled ✓';
+                    permBtn.disabled = true;
+                    permBtn.classList.add('opacity-60');
+                } else {
+                    permBtn.innerText = 'Enable push alerts';
+                    permBtn.disabled = false;
+                    permBtn.classList.remove('hidden', 'opacity-60');
+                }
+            }
+            if (!list) return;
+            if (!authUser) {
+                list.innerHTML = '<p class="text-xs text-muted-custom text-center py-8">Sign in to see notifications.</p>';
+                return;
+            }
+            if (notifications.length === 0) {
+                list.innerHTML = '<p class="text-xs text-muted-custom text-center py-8">No notifications yet.</p>';
+                return;
+            }
+            list.innerHTML = notifications.map(n => renderNotificationItem(n)).join('');
+        }
+
+        function renderNotificationItem(n) {
+            let actionHtml = '';
+            if (n.type === 'friend_request' && n.fromUid) {
+                actionHtml = `
+                    <div class="flex gap-2 mt-2 w-full">
+                        <button onclick="event.stopPropagation(); acceptFriendRequest('${n.fromUid}');" class="flex-1 py-1.5 custom-btn text-[10px] rounded-lg font-bold">Accept</button>
+                        <button onclick="event.stopPropagation(); declineFriendRequest('${n.fromUid}');" class="flex-1 py-1.5 custom-nav border text-[10px] rounded-lg font-bold text-muted-custom hover:text-white">Decline</button>
+                    </div>`;
+            } else if (n.type === 'group_invite' && n.groupId) {
+                actionHtml = `
+                    <div class="flex gap-2 mt-2 w-full">
+                        <button onclick="event.stopPropagation(); acceptGroupInvite('${n.groupId}', '${n.id}');" class="flex-1 py-1.5 custom-btn text-[10px] rounded-lg font-bold">Join</button>
+                        <button onclick="event.stopPropagation(); declineGroupInvite('${n.groupId}', '${n.id}');" class="flex-1 py-1.5 custom-nav border text-[10px] rounded-lg font-bold text-muted-custom hover:text-white">Decline</button>
+                    </div>`;
+            }
+            const timeText = n.createdAt ? formatRelativeTime(n.createdAt) : '';
+            const unreadClass = n.read ? 'opacity-70' : 'border-l-2 border-[var(--accent-primary)]';
+            return `
+                <div class="panel-menu-item flex-col items-start gap-1 ${unreadClass}" onclick="markNotificationRead('${n.id}')">
+                    <div class="flex justify-between w-full">
+                        <span class="text-xs font-bold">${escapeHtml(n.title || 'Notification')}</span>
+                        <span class="text-[10px] text-muted-custom">${timeText}</span>
+                    </div>
+                    <p class="text-[11px] text-muted-custom leading-snug">${escapeHtml(n.body || '')}</p>
+                    ${actionHtml}
+                </div>
+            `;
+        }
 
         function openNotificationsPanel() {
-            showToast('No new notifications');
+            const panel = document.getElementById('notifications-panel');
+            const backdrop = document.getElementById('notifications-panel-backdrop');
+            if (panel) panel.classList.add('open');
+            if (backdrop) backdrop.classList.add('open');
+            renderNotificationsPanel();
+            if ("Notification" in window && Notification.permission === 'default') {
+                requestNotificationPerm();
+            }
         }
-        function closeNotificationsPanel() {}
+
+        function closeNotificationsPanel() {
+            const panel = document.getElementById('notifications-panel');
+            const backdrop = document.getElementById('notifications-panel-backdrop');
+            if (panel) panel.classList.remove('open');
+            if (backdrop) backdrop.classList.remove('open');
+        }
+
+        // Delegate clicks for user-search action buttons (rendered dynamically)
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.search-user-action')) {
+                handleSearchUserAction(e);
+            }
+        });
 
         function renderHeaderAvatar() {
             const el = document.getElementById('header-profile-avatar');
@@ -4915,5 +5450,5 @@
             }
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a22b7617b80c7c72',t:'MTc4NTMyMTE2Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a22f60ef6e964001',t:'MTc4NTM2MjIzOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
