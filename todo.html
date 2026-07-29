@@ -10,10 +10,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,400;0,600;0,800;1,400&display=swap" rel="stylesheet">
     <style>
-        /* Same theme variables as the main dashboard (index.html), copied
-           as-is so this page looks like part of the same app rather than a
-           bolted-on extra. None of these were changed here - if the main
-           app's themes are ever edited, copy this block over again. */
         :root {
             --bg-main: #0f0e17; --bg-card: rgba(30, 30, 46, 0.5); --bg-nav: rgba(24, 24, 37, 0.7); --border-color: rgba(255, 255, 255, 0.08);
             --text-main: #cdd6f4; --text-muted: #9399b2; --accent-primary: #b4befe;
@@ -80,57 +76,95 @@
             --accent-glow: rgba(251, 191, 36, 0.3); --btn-bg: #fbbf24; --btn-text: #1a1000;
         }
 
+        .toggle-switch { position: relative; display: inline-block; width: 38px; height: 21px; flex-shrink: 0; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+        .toggle-slider {
+            position: absolute; inset: 0; cursor: pointer;
+            background-color: rgba(255, 255, 255, 0.15);
+            border: 1px solid var(--border-color);
+            border-radius: 9999px;
+            transition: background-color 0.2s ease;
+        }
+        .toggle-slider::before {
+            content: ""; position: absolute; height: 15px; width: 15px;
+            left: 2px; top: 2px;
+            background-color: #fff;
+            border-radius: 50%;
+            transition: transform 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+        }
+        .toggle-switch input:checked + .toggle-slider { background-color: var(--accent-primary); }
+        .toggle-switch input:checked + .toggle-slider::before { transform: translateX(17px); }
+
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.25); border-radius: 9999px; }
-        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 9999px; border: 2px solid transparent; background-clip: padding-box; transition: background-color 0.3s ease; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--accent-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 9999px; border: 2px solid transparent; background-clip: padding-box; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         * { scrollbar-width: thin; scrollbar-color: var(--border-color) rgba(0, 0, 0, 0.2); }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            overscroll-behavior: none;
+        }
 
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg-main);
             color: var(--text-main);
             transition: background-color 0.3s ease, color 0.3s ease;
-            background-image:
-                radial-gradient(circle at 15% 15%, var(--accent-glow) 0%, transparent 40%),
-                radial-gradient(circle at 85% 85%, var(--accent-glow) 0%, transparent 40%);
-            background-attachment: fixed;
-            min-height: 100vh;
-            min-height: -webkit-fill-available;
         }
 
         .mono { font-family: 'JetBrains Mono', monospace; }
 
         .custom-card {
-            background-color: var(--bg-card);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            background-color: color-mix(in srgb, var(--bg-main) 90%, white 10%);
             border: 1px solid var(--border-color);
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
-            transform: translateZ(0);
-            contain: layout style;
         }
         .custom-nav {
-            background-color: var(--bg-nav);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            background-color: color-mix(in srgb, var(--bg-main) 92%, white 8%);
             border-color: var(--border-color);
-            transform: translateZ(0);
-            contain: layout style;
         }
-        @media (max-width: 900px) {
-            .custom-card { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
-            .custom-nav { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+
+        /* AMOLED Mode */
+        html.amoled-mode .custom-card,
+        html.amoled-mode .custom-nav,
+        html.amoled-mode .header-icon-btn,
+        html.amoled-mode body {
+            background-color: #000000;
         }
-        @media (max-width: 480px) {
-            .custom-card { backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
-            .custom-nav { backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
+
+        /* Translucent Mode */
+        html.translucent-mode .custom-card {
+            background-color: color-mix(in srgb, var(--bg-card) 55%, var(--bg-main) 45%);
+        }
+        html.translucent-mode .custom-nav,
+        html.translucent-mode header {
+            background-color: color-mix(in srgb, var(--bg-nav) 60%, var(--bg-main) 40%);
         }
 
         .accent-text { color: var(--accent-primary); }
         .text-muted-custom { color: var(--text-muted); }
+
+        .header-icon-btn {
+            width: 2.25rem;
+            height: 2.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9999px;
+            background-color: color-mix(in srgb, var(--bg-main) 90%, white 10%);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: border-color 0.2s ease, background-color 0.2s ease;
+            flex-shrink: 0;
+        }
+        .header-icon-btn:hover { border-color: var(--accent-primary); background-color: var(--accent-glow); }
+
         .custom-btn {
             background-color: var(--btn-bg);
             color: var(--btn-text);
@@ -140,34 +174,143 @@
         .custom-btn:hover { filter: brightness(1.1); box-shadow: 0 0 15px var(--accent-glow); }
         .custom-btn:active { transform: scale(0.97); }
         .custom-btn:disabled { filter: none; box-shadow: none; }
+
+        .dropdown-menu-base {
+            max-height: 0px;
+            opacity: 0;
+            overflow: hidden;
+            transform: translateY(-8px);
+            transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, transform 0.25s ease;
+            pointer-events: none;
+            z-index: 99999 !important;
+            position: absolute;
+            contain: layout style;
+        }
+        .dropdown-menu-open {
+            max-height: 540px !important;
+            opacity: 1 !important;
+            transform: translateY(0px) !important;
+            pointer-events: auto !important;
+            overflow: hidden !important;
+        }
+
+        @media (max-width: 640px) {
+            #theme-menu.dropdown-menu-open {
+                position: fixed !important;
+                left: 0.75rem !important;
+                right: 0.75rem !important;
+                top: 4.5rem !important;
+                width: auto !important;
+                max-width: none !important;
+                max-height: calc(100dvh - 6rem) !important;
+                margin-top: 0 !important;
+                border-radius: 1rem !important;
+                display: flex !important;
+                flex-direction: column !important;
+            }
+            #theme-menu .theme-list {
+                flex: 1 1 auto !important;
+                min-height: 0 !important;
+                max-height: min(60vh, 320px) !important;
+                overflow-y: auto !important;
+            }
+        }
+        .theme-list {
+            max-height: min(60vh, 360px);
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 2px;
+        }
+
+        @media (max-width: 1024px) {
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
+                scroll-behavior: auto !important;
+            }
+            .custom-card, .custom-nav, .custom-btn {
+                box-shadow: none !important;
+            }
+            .custom-card:hover, .custom-card:active {
+                transform: none !important;
+                box-shadow: none !important;
+                border-color: var(--border-color) !important;
+            }
+            .custom-btn:hover, .custom-btn:active {
+                filter: none !important;
+                box-shadow: none !important;
+            }
+            * { text-shadow: none !important; }
+            .header-icon-btn {
+                width: 2.5rem !important;
+                height: 2.5rem !important;
+                font-size: 1rem !important;
+            }
+        }
     </style>
 </head>
-<body>
-    <header class="border-b custom-nav sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 h-16 flex items-center justify-between gap-1 sm:gap-2">
-            <h1 class="text-base sm:text-xl font-extrabold accent-text tracking-tight flex items-center gap-1 sm:gap-1.5 shrink-0 leading-none">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="shrink-0 sm:w-7 sm:h-7">
-                  <path d="M4 4L8 8H16L20 4V16C20 18.2 18.2 20 16 20H8C5.8 20 4 18.2 4 16V4Z" fill="#0F172A" stroke="#A855F7" stroke-width="1.5"/>
-                  <rect x="7" y="10" width="3" height="3" fill="#A855F7"/>
-                  <rect x="14" y="10" width="3" height="3" fill="#A855F7"/>
-                  <polygon points="11,14 13,14 12,15" fill="#EC4899"/>
-                </svg>
-                <span>PomoHarbor</span>
-                <span class="text-muted-custom font-semibold text-xs sm:text-sm">/ To-Do</span>
-            </h1>
+<body class="flex flex-col antialiased" onclick="closeThemeMenu();">
 
-            <div class="flex items-center gap-2 sm:gap-3">
+    <header class="border-b custom-nav sticky top-0 z-40 shrink-0">
+        <div class="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 h-16 flex items-center justify-between gap-2 overflow-visible">
+            <div class="flex items-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar py-1 flex-1 min-w-0 justify-start">
+                <h1 class="text-base sm:text-xl font-extrabold accent-text tracking-tight flex items-center gap-1.5 shrink-0 leading-none">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="shrink-0 sm:w-7 sm:h-7">
+                      <path d="M4 4L8 8H16L20 4V16C20 18.2 18.2 20 16 20H8C5.8 20 4 18.2 4 16V4Z" fill="#0F172A" stroke="#A855F7" stroke-width="1.5"/>
+                      <rect x="7" y="10" width="3" height="3" fill="#A855F7"/>
+                      <rect x="14" y="10" width="3" height="3" fill="#A855F7"/>
+                      <polygon points="11,14 13,14 12,15" fill="#EC4899"/>
+                    </svg>
+                    <span class="hidden sm:inline">PomoHarbor</span>
+                </h1>
+                <span class="text-xs font-bold text-muted-custom hidden sm:inline">/ To-Do</span>
+            </div>
+            <div class="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
                 <span id="sync-status" class="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 custom-nav border rounded-xl text-[11px] font-bold text-muted-custom">
                     <span id="sync-dot">🟡</span> <span id="sync-label">Connecting...</span>
                 </span>
-                <button onclick="goToDashboard()" class="px-3 sm:px-4 py-1.5 custom-nav border rounded-xl text-xs font-bold text-muted-custom hover:text-white hover:border-white/30 transition whitespace-nowrap">
-                    ← Dashboard
-                </button>
+                <div class="relative">
+                    <button onclick="event.stopPropagation(); toggleThemeDropdown(event);" class="header-icon-btn" title="Theme">🎨</button>
+                    <div id="theme-menu" class="dropdown-menu-base absolute right-0 top-full mt-3 w-44 sm:w-48 border rounded-2xl shadow-2xl p-1.5" style="background-color: var(--bg-main);" onclick="event.stopPropagation();">
+                        <div class="theme-list space-y-1">
+                            <div onclick="selectTheme('catppuccin', '🐱 Catppuccin')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition"><span>🐱 Catppuccin</span></div>
+                            <div onclick="selectTheme('turquoise', '🩵 Turquoise')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition"><span>🩵 Turquoise</span></div>
+                            <div onclick="selectTheme('carnation', '🌺 Carnation')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition"><span>🌺 Carnation</span></div>
+                            <div onclick="selectTheme('cerise', '🌸 Cerise')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition"><span>🌸 Cerise</span></div>
+                            <div onclick="selectTheme('swarm', '🐝 Swarm')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition"><span>🐝 Swarm</span></div>
+                            <div onclick="selectTheme('meadow', '🌿 Meadow')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition"><span>🌿 Meadow</span></div>
+                            <div onclick="selectTheme('merlin', '🧙‍♂️ Merlin')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition"><span>🧙‍♂️ Merlin</span></div>
+                            <div onclick="selectTheme('blueviolet', '💜 Blue Violet')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition"><span>💜 Blue Violet</span></div>
+                            <div onclick="selectTheme('monochrome', '⚪ Monochrome')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition"><span>⚪ Monochrome</span></div>
+                            <div class="my-1 border-t border-white/10"></div>
+                            <div onclick="selectTheme('frostcontrast', '❄️ Frost Contrast')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition"><span>❄️ Frost Contrast</span></div>
+                            <div onclick="selectTheme('inkcontrast', '🖋️ Ink Contrast')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition"><span>🖋️ Ink Contrast</span></div>
+                            <div onclick="selectTheme('ambercontrast', '🔶 Amber Contrast')" class="px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer text-xs font-semibold flex items-center justify-between transition"><span>🔶 Amber Contrast</span></div>
+                            <div class="my-1 border-t border-white/10"></div>
+                            <div class="px-3 py-2 rounded-xl flex items-center justify-between gap-2" onclick="event.stopPropagation()">
+                                <span class="text-xs font-semibold">🌑 AMOLED Mode</span>
+                                <label class="toggle-switch">
+                                    <input id="amoled-toggle" type="checkbox" onchange="toggleAmoledMode(this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="my-1 border-t border-white/10"></div>
+                            <div class="px-3 py-2 rounded-xl flex items-center justify-between gap-2" onclick="event.stopPropagation()">
+                                <span class="text-xs font-semibold">✨ Translucent Mode</span>
+                                <label class="toggle-switch">
+                                    <input id="translucent-toggle" type="checkbox" onchange="toggleTranslucentMode(this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="goToDashboard()" class="header-icon-btn" title="Back to Dashboard">🏠</button>
             </div>
         </div>
     </header>
 
-    <main class="flex-grow p-4 sm:p-8 pt-6 sm:pt-10 max-w-2xl mx-auto w-full">
+    <main class="flex-1 min-h-0 overflow-y-auto p-4 sm:p-8 pt-6 sm:pt-10 max-w-2xl mx-auto w-full">
         <div class="custom-card p-5 sm:p-8 rounded-3xl border shadow-2xl">
             <div class="flex flex-wrap justify-between items-center gap-2 mb-6 pb-4 border-b border-white/10">
                 <div>
@@ -177,7 +320,6 @@
                 <span id="todo-count-badge" class="px-3 py-1.5 custom-nav border rounded-xl text-xs font-bold text-muted-custom whitespace-nowrap">0 / 10</span>
             </div>
 
-            <!-- Two small summary widgets side by side -->
             <div class="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
                 <div class="custom-nav border rounded-2xl p-3 sm:p-4 text-center">
                     <div id="todo-widget-active" class="text-2xl sm:text-3xl font-black accent-text">0</div>
@@ -205,8 +347,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
     <script>
-        // ---- Room resolution: identical scheme to index.html, so this
-        // page always joins the same room/device group. ----
         function generateRoomId(len = 10) {
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
             let out = '';
@@ -224,10 +364,68 @@
             window.location.href = 'index.html?t=' + Date.now() + window.location.hash;
         }
 
-        // ---- Theme: read whatever the dashboard has saved for this room
-        // and apply it read-only, so this page matches the dashboard's look.
+        function changeTheme(themeName) {
+            document.documentElement.setAttribute('data-theme', themeName);
+            localStorage.setItem(roomKey('pomoharbor_fmhy_theme'), themeName);
+        }
+
+        function applyAmoledMode(isOn) {
+            const root = document.documentElement.style;
+            if (isOn) {
+                root.setProperty('--bg-main', '#000000');
+                root.setProperty('--bg-card', 'rgba(0, 0, 0, 0.92)');
+                root.setProperty('--bg-nav', 'rgba(0, 0, 0, 0.92)');
+            } else {
+                root.removeProperty('--bg-main');
+                root.removeProperty('--bg-card');
+                root.removeProperty('--bg-nav');
+            }
+            const toggleEl = document.getElementById('amoled-toggle');
+            if (toggleEl) toggleEl.checked = !!isOn;
+        }
+
+        function toggleAmoledMode(isOn) {
+            localStorage.setItem(roomKey('pomoharbor_amoled_mode'), isOn ? 'true' : 'false');
+            applyAmoledMode(isOn);
+        }
+
+        function applyTranslucentMode(isOn) {
+            if (isOn) document.documentElement.classList.add('translucent-mode');
+            else document.documentElement.classList.remove('translucent-mode');
+            const toggleEl = document.getElementById('translucent-toggle');
+            if (toggleEl) toggleEl.checked = !!isOn;
+        }
+
+        function toggleTranslucentMode(isOn) {
+            localStorage.setItem(roomKey('pomoharbor_translucent_mode'), isOn ? 'true' : 'false');
+            applyTranslucentMode(isOn);
+        }
+
+        function toggleThemeDropdown(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('theme-menu');
+            if (menu) menu.classList.toggle('dropdown-menu-open');
+        }
+
+        function closeThemeMenu() {
+            const menu = document.getElementById('theme-menu');
+            if (menu && menu.classList.contains('dropdown-menu-open')) {
+                menu.classList.remove('dropdown-menu-open');
+            }
+        }
+
+        function selectTheme(themeKey, labelText) {
+            changeTheme(themeKey);
+            closeThemeMenu();
+        }
+
+        // Apply saved preferences on load
         const savedTheme = localStorage.getItem(roomKey('pomoharbor_fmhy_theme')) || 'catppuccin';
-        document.documentElement.setAttribute('data-theme', savedTheme);
+        changeTheme(savedTheme);
+        const savedAmoled = localStorage.getItem(roomKey('pomoharbor_amoled_mode')) === 'true';
+        applyAmoledMode(savedAmoled);
+        const savedTranslucent = localStorage.getItem(roomKey('pomoharbor_translucent_mode')) === 'true';
+        applyTranslucentMode(savedTranslucent);
 
         function showToast(msg) {
             const toast = document.getElementById('toast');
@@ -240,14 +438,7 @@
             return str.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         }
 
-        // ---- To-Do state ----
         const TODO_MAX = 10;
-        // Array.isArray guard: if local storage ever ends up holding
-        // something other than a plain array (e.g. from an older bug, or
-        // manual tampering), fall back to [] instead of crashing on the
-        // very first render - a render crash here would stop the rest of
-        // the script, including the Firebase init below it, leaving the
-        // sync badge stuck on "Connecting..." with no way to recover.
         let rawTodos = JSON.parse(localStorage.getItem(roomKey('pomoharbor_todos')) || '[]');
         let todos = Array.isArray(rawTodos) ? rawTodos : [];
         let cloudSyncReady = false;
@@ -294,9 +485,6 @@
             localStorage.setItem(roomKey('pomoharbor_todos'), JSON.stringify(todos));
         }
 
-        // Pushes ONLY the todos slice of the room's cloud state - never a
-        // full overwrite - so this page can never wipe out the timers,
-        // journal, settings, etc. that index.html keeps in the same room.
         function pushTodosToCloud() {
             if (!cloudSyncReady || isApplyingRemoteState || !todosRef) return;
             updateSyncStatusUI('syncing');
@@ -347,19 +535,12 @@
             else { dot.innerText = '🟡'; label.innerText = 'Connecting...'; }
         }
 
-        // Wrapped defensively: a rendering error here must never prevent
-        // the Cloud Sync setup below from running - that's exactly what
-        // let this page get stuck on "Connecting..." before.
         try {
             renderTodoUI();
         } catch (err) {
             console.warn('To-Do: initial render failed', err);
         }
 
-        // ---- Cloud sync: same Firebase project/room as index.html, but
-        // this page only ever reads/writes the "todos" child of the room's
-        // state - it never touches timers/journal/settings/theme, so it
-        // can't clobber anything the dashboard is doing at the same time. ----
         try {
             if (typeof firebase === 'undefined') throw new Error('Firebase SDK did not load');
 
@@ -383,8 +564,6 @@
                 try {
                     const remote = snapshot.val();
                     if (!remote) {
-                        // Nothing synced yet for this room - seed it with
-                        // whatever is on this device (usually empty).
                         pushTodosToCloud();
                         return;
                     }
@@ -413,14 +592,13 @@
         }
     </script>
 <script>
-        // Force a fresh load when the browser restores this page from the
-        // back-forward cache, so the user never sees an old version after
-        // returning from the to-do page.
         window.addEventListener('pageshow', function(event) {
             if (event.persisted) {
-                window.location.reload();
+                const url = new URL(window.location.href);
+                url.searchParams.set('_bfc', Date.now());
+                window.location.replace(url.toString());
             }
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a226d7db2ce05cb8',t:'MTc4NTI3MjczOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2289886bf1387fe',t:'MTc4NTI5MTExNg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
