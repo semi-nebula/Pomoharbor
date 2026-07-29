@@ -385,6 +385,29 @@
             color: var(--accent-primary);
             border: 1px solid var(--border-color);
         }
+
+        .view-tab-btn { position: relative; }
+        .view-tab-active {
+            color: var(--accent-primary) !important;
+            background-color: var(--accent-glow);
+        }
+        .view-tab-active::after {
+            content: '';
+            position: absolute;
+            left: 0.25rem;
+            right: 0.25rem;
+            bottom: 0.25rem;
+            height: 2px;
+            background-color: var(--accent-primary);
+            border-radius: 9999px;
+        }
+        .view-tab-inactive {
+            color: var(--text-muted);
+        }
+        .view-tab-inactive:hover {
+            color: var(--text-main);
+            background-color: rgba(255,255,255,0.05);
+        }
         .auth-tab-active {
             border-bottom: 2px solid var(--accent-primary);
             color: var(--accent-primary);
@@ -489,149 +512,157 @@
             }
         }
 
-        /* --- MOBILE / TABLET: BOTTOM TAB BAR (YouTube-style) --- */
-        /* Replaces the old left-side vertical panel with a fixed bottom
-           navigation bar so every function stays one-tap reachable and
-           nothing overlaps the content. Scoped to any narrow viewport
-           (<=1024px) - desktop keeps the header nav unchanged. */
+        /* --- MOBILE / TABLET: BOTTOM TAB BAR (4-tab redesign) --- */
+        /* Desktop keeps the full header nav. Mobile gets a compact 4-tab
+           rounded dock: Timers, Pomodoro, Journal, More. The old Search,
+           Layout and Notifications icons move into the More sheet. */
         @media (max-width: 1024px) {
-            /* The header uses .custom-nav, which applies backdrop-filter and
-               transform: translateZ(0). Both of those create a containing block
-               for position:fixed children, so a fixed #main-nav-tabs would be
-               trapped inside the 64px header instead of anchoring to the
-               viewport bottom. Strip those properties in the mobile breakpoint. */
             header.custom-nav {
                 transform: none !important;
                 backdrop-filter: none !important;
                 -webkit-backdrop-filter: none !important;
                 contain: none !important;
             }
+
+            /* Hide desktop-only header pieces on mobile */
+            header.custom-nav .header-icon-btn[title="Search"],
+            header.custom-nav .header-icon-btn[title="Layout"],
+            header.custom-nav .header-icon-btn[title="Notifications"] {
+                display: none !important;
+            }
+
+            /* Desktop nav is hidden on mobile */
             #main-nav-tabs {
+                display: none !important;
+            }
+
+            /* Mobile bottom nav: floating rounded dock */
+            #mobile-nav-tabs {
                 position: fixed !important;
-                left: 0 !important;
-                right: 0 !important;
-                bottom: 0 !important;
+                left: 0.75rem !important;
+                right: 0.75rem !important;
+                bottom: 0.75rem !important;
                 top: auto !important;
-                transform: none !important;
                 flex-direction: row !important;
                 flex-wrap: nowrap !important;
                 justify-content: space-around !important;
                 align-items: stretch !important;
-                gap: 0.15rem !important;
+                gap: 0.25rem !important;
                 margin: 0 !important;
-                width: 100% !important;
-                border-radius: 0 !important;
-                border-left: none !important;
-                border-right: none !important;
-                border-bottom: none !important;
-                border-top: 1px solid var(--border-color) !important;
-                padding: 0.6rem 0.25rem calc(0.6rem + env(safe-area-inset-bottom)) !important;
+                width: auto !important;
+                border-radius: 1.5rem !important;
+                border: 1px solid var(--border-color) !important;
+                padding: 0.5rem !important;
+                padding-bottom: calc(0.5rem + env(safe-area-inset-bottom)) !important;
                 z-index: 100 !important;
-                box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.45) !important;
+                box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.35) !important;
                 overflow-x: auto !important;
                 overflow-y: hidden !important;
+                background-color: color-mix(in srgb, var(--bg-main) 96%, white 4%) !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
             }
-            #main-nav-tabs > button {
+            .mobile-tab-btn {
                 margin: 0 !important;
                 flex: 1 1 0 !important;
                 min-width: 0 !important;
+                min-height: 3.5rem !important;
+                display: flex !important;
                 flex-direction: column !important;
                 align-items: center !important;
                 justify-content: center !important;
                 gap: 0.25rem !important;
                 text-align: center !important;
-                padding: 0.5rem 0.15rem !important;
-                border-radius: 0.85rem !important;
-                font-size: 0.78rem !important;
+                padding: 0.5rem 0.25rem !important;
+                border-radius: 1rem !important;
+                font-size: 0.7rem !important;
                 line-height: 1.1 !important;
                 overflow: hidden !important;
+                border: 1px solid transparent !important;
+                background-color: transparent !important;
+                color: var(--text-muted) !important;
+                position: relative !important;
+                transition: none !important;
             }
-            #main-nav-tabs > button:last-child {
-                margin-bottom: 0 !important;
+            .mobile-tab-active {
+                color: var(--accent-primary) !important;
+                background-color: var(--accent-glow) !important;
+                border-color: var(--border-color) !important;
             }
-            #main-nav-tabs > #add-btn {
-                margin: 0 !important;
-                flex: 1 1 0 !important;
-                align-self: stretch !important;
-                justify-content: center !important;
-                width: auto !important;
-                height: auto !important;
-                padding: 0.35rem 0.15rem !important;
-                border-radius: 0.75rem !important;
-                flex-direction: column !important;
-            }
-            #main-container {
-                padding-left: 0 !important;   /* drop the old left-sidebar offset */
-                padding-right: 0 !important;
-                /* Clear the bottom tab bar AND the quick-jump bar above it
-                   (incl. the device's home-indicator safe area). */
-                padding-bottom: calc(6.8rem + env(safe-area-inset-bottom)) !important;
-            }
-            #quick-links-list {
-                max-height: 25vh !important; /* Shortens the links list specifically for mobile */
+            .mobile-tab-active::before {
+                content: '';
+                position: absolute;
+                top: 0.35rem;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 1.25rem;
+                height: 3px;
+                background-color: var(--accent-primary);
+                border-radius: 9999px;
             }
 
-            /* Quick-jump bar: one small button per stopwatch/timer, sitting
-               just above the bottom tab bar. Lets users hop straight to any
-               item (by index) without scrolling the sometimes-laggy list on
-               low-end phones. Shown by JS only on the stopwatch/timer tabs. */
-            #quick-jump-bar {
-                position: fixed !important;
-                left: 0 !important;
-                right: 0 !important;
-                bottom: calc(3.3rem + env(safe-area-inset-bottom)) !important;
-                z-index: 90 !important;
-                display: none; /* toggled to flex by JS */
-                align-items: center;
-                gap: 0.4rem;
-                padding: 0.3rem 0.6rem;
-                padding-right: 4.5rem; /* keep the custom-bg FAB clear on the right */
-                overflow-x: auto !important;
-                overflow-y: hidden !important;
-                border-top: 1px solid var(--border-color) !important;
+            /* Mobile Timers segment switcher */
+            #mobile-timers-segment {
+                background-color: var(--bg-main) !important;
             }
-            .quick-jump-btn {
-                flex: 0 0 auto;
-                min-width: 2.1rem;
-                height: 2.1rem;
-                padding: 0 0.5rem;
-                border-radius: 0.6rem;
-                font-size: 0.8rem;
-                font-weight: 700;
-                color: var(--text-main);
-                background-color: var(--bg-card);
-                border: 1px solid var(--border-color);
+            .mobile-segment-active {
+                background-color: var(--accent-glow);
+                color: var(--accent-primary);
+            }
+            .mobile-segment-inactive {
+                color: var(--text-muted);
+            }
+
+            /* Mobile FAB */
+            #mobile-fab {
+                box-shadow: 0 6px 24px rgba(0,0,0,0.45);
+            }
+
+            /* Mobile More sheet items */
+            .mobile-more-item {
                 display: flex;
+                flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                cursor: pointer;
+                padding: 0.75rem 0.25rem;
+                border-radius: 1rem;
+                background-color: color-mix(in srgb, var(--bg-main) 92%, white 8%);
+                border: 1px solid var(--border-color);
+                color: var(--text-main);
             }
-            .quick-jump-btn:active { transform: scale(0.94); }
+            .mobile-more-item:active {
+                background-color: var(--accent-glow);
+                border-color: var(--accent-primary);
+            }
 
-            /* Make the bottom tab bar and quick-jump buttons solid on mobile
-               instead of translucent/glassy. */
-            #main-nav-tabs {
-                background-color: var(--bg-main) !important;
+            /* Main container clears the rounded bottom nav */
+            #main-container {
+                padding-left: 0 !important;
+                padding-right: 0 !important;
+                padding-bottom: calc(6.5rem + env(safe-area-inset-bottom)) !important;
+            }
+
+            /* Quick-jump bar and FAB removed on mobile */
+            #quick-jump-bar,
+            #mobile-fab {
+                display: none !important;
+            }
+
+            #mobile-nav-tabs {
                 backdrop-filter: none !important;
                 -webkit-backdrop-filter: none !important;
                 box-shadow: none !important;
-            }
-            #quick-jump-bar {
-                background-color: var(--bg-main) !important;
-                backdrop-filter: none !important;
-                -webkit-backdrop-filter: none !important;
-                box-shadow: none !important;
-            }
-            .quick-jump-btn {
-                background-color: var(--bg-main) !important;
-                border-color: var(--border-color) !important;
             }
         }
 
-        /* Hide the [+] button inside the header nav on desktop — it is
-           duplicated as a standalone button in the right control cluster. */
+        /* Desktop-only: hide all mobile-specific chrome */
         @media (min-width: 1025px) {
-            #main-nav-tabs > #add-btn {
+            #mobile-nav-tabs,
+            #mobile-timers-segment,
+            #mobile-fab,
+            #mobile-more-backdrop,
+            #mobile-more-sheet,
+            #quick-jump-bar {
                 display: none !important;
             }
         }
@@ -1035,11 +1066,19 @@
                 <input id="auth-signup-username" type="text" placeholder="Username (unique)" class="w-full custom-nav border rounded-xl px-3 py-2 text-xs outline-none text-white">
                 <input id="auth-signup-password" type="password" placeholder="Password" class="w-full custom-nav border rounded-xl px-3 py-2 text-xs outline-none text-white">
                 <input id="auth-signup-confirm" type="password" placeholder="Confirm password" class="w-full custom-nav border rounded-xl px-3 py-2 text-xs outline-none text-white">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input id="auth-remember-signup" type="checkbox" checked class="w-4 h-4 accent-indigo-400 rounded cursor-pointer">
+                    <span class="text-xs font-semibold text-muted-custom">Remember me on this device</span>
+                </label>
                 <button onclick="handleSignUp()" class="w-full py-3 custom-btn text-xs uppercase tracking-wider rounded-xl font-bold">Create Account</button>
             </div>
             <div id="auth-login-form" class="hidden space-y-4">
                 <input id="auth-login-username" type="text" placeholder="Username" class="w-full custom-nav border rounded-xl px-3 py-2 text-xs outline-none text-white">
                 <input id="auth-login-password" type="password" placeholder="Password" class="w-full custom-nav border rounded-xl px-3 py-2 text-xs outline-none text-white">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input id="auth-remember-login" type="checkbox" checked class="w-4 h-4 accent-indigo-400 rounded cursor-pointer">
+                    <span class="text-xs font-semibold text-muted-custom">Remember me on this device</span>
+                </label>
                 <button onclick="handleLogin()" class="w-full py-3 custom-btn text-xs uppercase tracking-wider rounded-xl font-bold">Log In</button>
             </div>
             <p id="auth-error" class="text-[11px] text-red-400 mt-4 text-center font-semibold min-h-[1rem]"></p>
@@ -1117,7 +1156,7 @@
                     </svg>
                     <span class="hidden xl:inline">PomoHarbor</span>
                 </h1>
-                <nav id="main-nav-tabs" class="flex items-center space-x-0.5 shrink-0 overflow-x-auto no-scrollbar">
+                <nav id="main-nav-tabs" class="hidden lg:flex items-center space-x-0.5 shrink-0 overflow-x-auto no-scrollbar">
                     <button id="tab-stopwatch" onclick="switchTab('stopwatch')" class="px-2 sm:px-2.5 lg:px-3 py-1.5 text-[11px] sm:text-xs font-bold transition-all tab-glow accent-text tab-active whitespace-nowrap">⏱️ Stopwatch</button>
                     <button id="tab-timer" onclick="switchTab('timer')" class="px-2 sm:px-2.5 lg:px-3 py-1.5 text-[11px] sm:text-xs font-bold transition-all tab-glow text-muted-custom whitespace-nowrap">⏳ Timer</button>
                     <button id="tab-pomodoro" onclick="switchTab('pomodoro')" class="px-2 sm:px-2.5 lg:px-3 py-1.5 text-[11px] sm:text-xs font-bold transition-all tab-glow text-muted-custom whitespace-nowrap">🍅 Pomodoro</button>
@@ -1127,6 +1166,26 @@
                     
                     <button id="add-btn" onclick="addTimer()" class="w-7 h-7 flex items-center justify-center custom-btn text-xs rounded-lg transition-all active:scale-95 shadow ml-1 shrink-0" title="Add Item">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                    </button>
+                </nav>
+
+                <!-- Mobile bottom nav: 4 tabs + More sheet -->
+                <nav id="mobile-nav-tabs" class="flex lg:hidden items-center shrink-0 no-scrollbar">
+                    <button id="mobile-tab-timers" onclick="switchMobileTimersTab()" class="mobile-tab-btn mobile-tab-active">
+                        <span class="text-lg leading-none">⏱️</span>
+                        <span class="leading-none">Timers</span>
+                    </button>
+                    <button id="mobile-tab-pomodoro" onclick="switchTab('pomodoro')" class="mobile-tab-btn mobile-tab-inactive">
+                        <span class="text-lg leading-none">🍅</span>
+                        <span class="leading-none">Pomodoro</span>
+                    </button>
+                    <button id="mobile-tab-journal" onclick="switchTab('journal')" class="mobile-tab-btn mobile-tab-inactive">
+                        <span class="text-lg leading-none">📖</span>
+                        <span class="leading-none">Journal</span>
+                    </button>
+                    <button id="mobile-tab-more" onclick="openMobileMoreSheet()" class="mobile-tab-btn mobile-tab-inactive">
+                        <span class="text-lg leading-none">⋯</span>
+                        <span class="leading-none">More</span>
                     </button>
                 </nav>
             </div>
@@ -1208,6 +1267,51 @@
             </div>
         </div>
     </header>
+
+    <!-- MOBILE: Timers segment switcher (Stopwatch / Timer) -->
+    <div id="mobile-timers-segment" class="hidden lg:hidden fixed left-0 right-0 top-16 z-30 custom-nav border-b px-4 py-2">
+        <div class="flex items-center gap-1 max-w-md mx-auto custom-card rounded-xl p-1 border">
+            <button id="mobile-segment-stopwatch" onclick="switchTab('stopwatch')" class="flex-1 py-1.5 text-xs font-bold rounded-lg mobile-segment-active">⏱️ Stopwatch</button>
+            <button id="mobile-segment-timer" onclick="switchTab('timer')" class="flex-1 py-1.5 text-xs font-bold rounded-lg mobile-segment-inactive">⏳ Timer</button>
+        </div>
+    </div>
+
+    <!-- MOBILE: More bottom sheet -->
+    <div id="mobile-more-backdrop" onclick="closeMobileMoreSheet()" class="fixed inset-0 bg-black/60 z-[110] opacity-0 pointer-events-none transition-opacity duration-200 lg:hidden"></div>
+    <div id="mobile-more-sheet" class="fixed left-0 right-0 bottom-0 z-[120] custom-card rounded-t-3xl border-t border-x p-5 transform translate-y-full transition-transform duration-150 lg:hidden" style="max-height: 75vh;">
+        <div class="w-10 h-1 bg-white/20 rounded-full mx-auto mb-4"></div>
+        <div class="grid grid-cols-3 gap-3">
+            <button onclick="closeMobileMoreSheet(); switchTab('flowtunes');" class="mobile-more-item">
+                <span class="text-xl">🎵</span>
+                <span class="text-[10px] font-bold mt-1">Flowtunes</span>
+            </button>
+            <button onclick="closeMobileMoreSheet(); switchTab('groups');" class="mobile-more-item">
+                <span class="text-xl">👥</span>
+                <span class="text-[10px] font-bold mt-1">Groups</span>
+            </button>
+            <button onclick="closeMobileMoreSheet(); openSearchPanel();" class="mobile-more-item">
+                <span class="text-xl">🔍</span>
+                <span class="text-[10px] font-bold mt-1">Search</span>
+            </button>
+            <button onclick="closeMobileMoreSheet(); openNotificationsPanel();" class="mobile-more-item">
+                <span class="text-xl">🔔</span>
+                <span class="text-[10px] font-bold mt-1">Notifications</span>
+            </button>
+            <button onclick="closeMobileMoreSheet(); cycleLayoutShortcut();" class="mobile-more-item">
+                <span class="text-xl">田</span>
+                <span class="text-[10px] font-bold mt-1">Layout</span>
+            </button>
+            <button onclick="closeMobileMoreSheet(); openModal('settings-modal');" class="mobile-more-item">
+                <span class="text-xl">⚙️</span>
+                <span class="text-[10px] font-bold mt-1">Settings</span>
+            </button>
+            <button onclick="closeMobileMoreSheet(); openProfilePanel();" class="mobile-more-item">
+                <span class="text-xl">👤</span>
+                <span class="text-[10px] font-bold mt-1">Profile</span>
+            </button>
+        </div>
+        <button onclick="closeMobileMoreSheet()" class="w-full mt-4 py-3 custom-nav border rounded-2xl text-xs font-bold text-muted-custom">Cancel</button>
+    </div>
 
     <!-- PROFILE SLIDE-OVER PANEL -->
     <div id="profile-panel-backdrop" onclick="closeProfilePanel()" class="slide-over-backdrop"></div>
@@ -1520,10 +1624,10 @@
             <header class="custom-nav border rounded-2xl p-2 mb-5 flex flex-wrap items-center justify-between gap-2">
                 <button onclick="closeViewDashboard()" class="px-3 py-1.5 custom-nav border text-[11px] rounded-xl font-bold text-muted-custom hover:text-white shrink-0">← Back</button>
                 <nav class="flex items-center gap-1 custom-nav p-1 rounded-xl border overflow-x-auto no-scrollbar">
-                    <button id="view-tab-stopwatch" onclick="switchViewOnlyTab('stopwatch')" class="view-tab-btn px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-bold rounded-xl tab-active whitespace-nowrap">⏱️ Stopwatch</button>
-                    <button id="view-tab-timer" onclick="switchViewOnlyTab('timer')" class="view-tab-btn px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-bold rounded-xl text-muted-custom whitespace-nowrap">⏳ Timer</button>
-                    <button id="view-tab-pomodoro" onclick="switchViewOnlyTab('pomodoro')" class="view-tab-btn px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-bold rounded-xl text-muted-custom whitespace-nowrap">🍅 Pomodoro</button>
-                    <button id="view-tab-journal" onclick="switchViewOnlyTab('journal')" class="view-tab-btn px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-bold rounded-xl text-muted-custom whitespace-nowrap">📖 Journal</button>
+                    <button id="view-tab-stopwatch" onclick="switchViewOnlyTab('stopwatch')" class="view-tab-btn view-tab-active px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-bold rounded-xl whitespace-nowrap">⏱️ Stopwatch</button>
+                    <button id="view-tab-timer" onclick="switchViewOnlyTab('timer')" class="view-tab-btn view-tab-inactive px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-bold rounded-xl whitespace-nowrap">⏳ Timer</button>
+                    <button id="view-tab-pomodoro" onclick="switchViewOnlyTab('pomodoro')" class="view-tab-btn view-tab-inactive px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-bold rounded-xl whitespace-nowrap">🍅 Pomodoro</button>
+                    <button id="view-tab-journal" onclick="switchViewOnlyTab('journal')" class="view-tab-btn view-tab-inactive px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-bold rounded-xl whitespace-nowrap">📖 Journal</button>
                 </nav>
                 <div class="view-only-badge shrink-0">View Only</div>
             </header>
@@ -1578,6 +1682,8 @@
         // ============================================================
         let authUser = null;
         let userProfile = null;
+        let groupsUIRendered = false;
+        let lastGroupsAuthState = null;
         let myPublicStateRef = null;
         let publicStateListeners = {};
         let groupListeners = [];
@@ -1876,6 +1982,7 @@
                 closeThemeMenu();
                 closeQuickLinksMenu();
                 closeSyncMenu();
+                closeMobileMoreSheet();
             }
         });
 
@@ -2862,6 +2969,50 @@
             if (stateChanged) { save(); render(); } else { updateDisplays(); }
         }
 
+        let mobileTimerSubview = 'stopwatch';
+
+        function updateMobileNavActiveState(tab) {
+            const timersBtn = document.getElementById('mobile-tab-timers');
+            const pomodoroBtn = document.getElementById('mobile-tab-pomodoro');
+            const journalBtn = document.getElementById('mobile-tab-journal');
+            const moreBtn = document.getElementById('mobile-tab-more');
+            if (timersBtn) timersBtn.className = (tab === 'stopwatch' || tab === 'timer') ? 'mobile-tab-btn mobile-tab-active' : 'mobile-tab-btn mobile-tab-inactive';
+            if (pomodoroBtn) pomodoroBtn.className = tab === 'pomodoro' ? 'mobile-tab-btn mobile-tab-active' : 'mobile-tab-btn mobile-tab-inactive';
+            if (journalBtn) journalBtn.className = tab === 'journal' ? 'mobile-tab-btn mobile-tab-active' : 'mobile-tab-btn mobile-tab-inactive';
+            if (moreBtn) moreBtn.className = (tab === 'flowtunes' || tab === 'groups') ? 'mobile-tab-btn mobile-tab-active' : 'mobile-tab-btn mobile-tab-inactive';
+        }
+
+        function renderMobileTimersSegment() {
+            const segment = document.getElementById('mobile-timers-segment');
+            const swBtn = document.getElementById('mobile-segment-stopwatch');
+            const tBtn = document.getElementById('mobile-segment-timer');
+            if (!segment) return;
+            const isTimers = currentTab === 'stopwatch' || currentTab === 'timer';
+            const isMobile = window.matchMedia('(max-width: 1024px)').matches;
+            if (isTimers && isMobile) segment.classList.remove('hidden');
+            else segment.classList.add('hidden');
+            if (swBtn) swBtn.className = currentTab === 'stopwatch' ? 'flex-1 py-1.5 text-xs font-bold rounded-lg mobile-segment-active' : 'flex-1 py-1.5 text-xs font-bold rounded-lg mobile-segment-inactive';
+            if (tBtn) tBtn.className = currentTab === 'timer' ? 'flex-1 py-1.5 text-xs font-bold rounded-lg mobile-segment-active' : 'flex-1 py-1.5 text-xs font-bold rounded-lg mobile-segment-inactive';
+        }
+
+        function switchMobileTimersTab() {
+            switchTab(mobileTimerSubview);
+        }
+
+        function openMobileMoreSheet() {
+            const backdrop = document.getElementById('mobile-more-backdrop');
+            const sheet = document.getElementById('mobile-more-sheet');
+            if (backdrop) { backdrop.classList.remove('opacity-0', 'pointer-events-none'); }
+            if (sheet) { sheet.classList.remove('translate-y-full'); }
+        }
+
+        function closeMobileMoreSheet() {
+            const backdrop = document.getElementById('mobile-more-backdrop');
+            const sheet = document.getElementById('mobile-more-sheet');
+            if (backdrop) { backdrop.classList.add('opacity-0', 'pointer-events-none'); }
+            if (sheet) { sheet.classList.add('translate-y-full'); }
+        }
+
         function switchTab(tab) {
             if (currentTab === tab) return;
 
@@ -2870,6 +3021,10 @@
                 const el = document.getElementById(`tab-${t}`);
                 if (el) el.className = t === tab ? "px-2 sm:px-2.5 lg:px-3 py-1.5 text-[11px] sm:text-xs font-bold transition-all tab-glow accent-text tab-active whitespace-nowrap" : "px-2 sm:px-2.5 lg:px-3 py-1.5 text-[11px] sm:text-xs font-bold transition-all tab-glow text-muted-custom whitespace-nowrap";
             });
+
+            if (tab === 'stopwatch' || tab === 'timer') mobileTimerSubview = tab;
+            updateMobileNavActiveState(tab);
+            renderMobileTimersSegment();
 
             const addBtn = document.getElementById('add-btn');
             if (addBtn) {
@@ -2892,8 +3047,10 @@
             updateMyPublicState();
 
             // On mobile/tablet the fade-in is disabled (animations are off
-            // there), so just swap the view instantly.
-            if (window.matchMedia('(max-width: 1024px)').matches) {
+            // there), so just swap the view instantly. Also skip the fade for
+            // Groups on desktop because it loads async Firebase data and the
+            // transition looks janky while content is still settling.
+            if (window.matchMedia('(max-width: 1024px)').matches || tab === 'groups') {
                 render();
                 return;
             }
@@ -3329,7 +3486,7 @@
         function closeModal(id) { document.getElementById(id).classList.add('opacity-0', 'pointer-events-none'); }
 
         function render() {
-            renderQuickJumpBar();
+            renderMobileTimersSegment();
             const pomoTasksPreview = document.getElementById('pomodoro-tasks-preview');
             if (pomoTasksPreview && currentTab !== 'pomodoro') pomoTasksPreview.classList.add('hidden');
             const mainContainer = document.getElementById('main-container');
@@ -3832,7 +3989,8 @@
                     updateMyPublicState();
                     renderHeaderAvatar();
                     renderProfilePanel();
-                    renderGroupsUI();
+                    groupsUIRendered = false;
+                    renderGroupsUI(true);
                     if (currentTab === 'groups') render();
 
                 } else {
@@ -3842,7 +4000,8 @@
                     renderHeaderAvatar();
                     renderProfilePanel();
                     detachAllGroupListeners();
-                    renderGroupsUI();
+                    groupsUIRendered = false;
+                    renderGroupsUI(true);
                     if (currentTab === 'groups') render();
                 }
             });
@@ -3889,6 +4048,7 @@
             const username = document.getElementById('auth-signup-username').value.trim().toLowerCase();
             const password = document.getElementById('auth-signup-password').value;
             const confirm = document.getElementById('auth-signup-confirm').value;
+            const rememberMe = document.getElementById('auth-remember-signup').checked;
             const errEl = document.getElementById('auth-error');
             errEl.innerText = '';
 
@@ -3903,6 +4063,8 @@
                 if (usernameSnap.exists()) { errEl.innerText = 'Username already taken.'; return; }
 
                 const email = usernameToEmail(username);
+                await firebase.auth().setPersistence(rememberMe ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION);
+                localStorage.setItem('pomoharbor_remember_me', rememberMe ? 'true' : 'false');
                 const cred = await firebase.auth().createUserWithEmailAndPassword(email, password);
                 const uid = cred.user.uid;
                 const color = stringToColor(username);
@@ -3922,6 +4084,7 @@
         async function handleLogin() {
             const username = document.getElementById('auth-login-username').value.trim().toLowerCase();
             const password = document.getElementById('auth-login-password').value;
+            const rememberMe = document.getElementById('auth-remember-login').checked;
             const errEl = document.getElementById('auth-error');
             errEl.innerText = '';
             if (!username || !password) { errEl.innerText = 'Please enter username and password.'; return; }
@@ -3929,6 +4092,8 @@
             isAuthenticating = true;
             try {
                 const email = usernameToEmail(username);
+                await firebase.auth().setPersistence(rememberMe ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION);
+                localStorage.setItem('pomoharbor_remember_me', rememberMe ? 'true' : 'false');
                 const cred = await firebase.auth().signInWithEmailAndPassword(email, password);
                 const uid = cred.user.uid;
 
@@ -3964,9 +4129,11 @@
             // Capture the home room before auth state clears.
             const homeRoomId = userProfile ? userProfile.roomId : null;
             const wasAccountRoom = authUser && homeRoomId && ROOM_ID === homeRoomId;
+            const rememberMe = localStorage.getItem('pomoharbor_remember_me') !== 'false';
             if (typeof firebase !== 'undefined' && firebase.auth) {
                 firebase.auth().signOut().then(() => {
-                    if (wasAccountRoom) {
+                    if (wasAccountRoom && !rememberMe) {
+                        // User chose not to be remembered: give them a fresh anonymous room.
                         window.location.hash = generateRoomId();
                         window.location.reload();
                     } else {
@@ -4223,12 +4390,28 @@
 
         // --- Rendering groups / friends ---
 
-        async function renderGroupsUI() {
+        async function renderGroupsUI(force = false) {
             const authPrompt = document.getElementById('groups-auth-prompt');
             const loggedIn = document.getElementById('groups-logged-in');
             if (!authPrompt || !loggedIn) return;
 
-            if (!authUser || !userProfile) {
+            const isLoggedIn = !!(authUser && userProfile);
+            // Toggle visibility immediately without re-rendering lists if already done.
+            if (!force && groupsUIRendered && lastGroupsAuthState === isLoggedIn) {
+                if (isLoggedIn) {
+                    authPrompt.classList.add('hidden');
+                    loggedIn.classList.remove('hidden');
+                } else {
+                    authPrompt.classList.remove('hidden');
+                    loggedIn.classList.add('hidden');
+                }
+                return;
+            }
+
+            lastGroupsAuthState = isLoggedIn;
+            groupsUIRendered = true;
+
+            if (!isLoggedIn) {
                 authPrompt.classList.remove('hidden');
                 loggedIn.classList.add('hidden');
                 return;
@@ -4242,10 +4425,14 @@
             circle.innerText = getInitials(userProfile.name);
             circle.style.backgroundColor = userProfile.color || stringToColor(userProfile.username);
 
-            // Friends + requests
+            // Friends + requests + groups fetched in parallel to avoid staged flashing.
             try {
-                const friendsSnap = await firebase.database().ref('users/' + authUser.uid + '/friends').once('value');
-                const requestsSnap = await firebase.database().ref('users/' + authUser.uid + '/friendRequests').once('value');
+                const [friendsSnap, requestsSnap, groupsSnap] = await Promise.all([
+                    firebase.database().ref('users/' + authUser.uid + '/friends').once('value'),
+                    firebase.database().ref('users/' + authUser.uid + '/friendRequests').once('value'),
+                    firebase.database().ref('users/' + authUser.uid + '/groups').once('value')
+                ]);
+
                 const friendsUids = friendsSnap.exists() ? Object.keys(friendsSnap.val() || {}) : [];
                 const requests = requestsSnap.exists() ? requestsSnap.val() || {} : {};
 
@@ -4292,8 +4479,6 @@
                     `).join('');
                 }
 
-                // Groups
-                const groupsSnap = await firebase.database().ref('users/' + authUser.uid + '/groups').once('value');
                 const groups = groupsSnap.exists() ? groupsSnap.val() || {} : {};
                 const groupsListEl = document.getElementById('groups-list');
                 if (Object.keys(groups).length === 0) {
@@ -4466,6 +4651,15 @@
 
         function switchViewOnlyTab(tab) {
             viewOnlyCurrentTab = tab;
+            ['stopwatch', 'timer', 'pomodoro', 'journal'].forEach(t => {
+                const btn = document.getElementById('view-tab-' + t);
+                if (!btn) return;
+                if (t === tab) {
+                    btn.className = 'view-tab-btn view-tab-active px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-bold rounded-xl whitespace-nowrap';
+                } else {
+                    btn.className = 'view-tab-btn view-tab-inactive px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-bold rounded-xl whitespace-nowrap';
+                }
+            });
             renderViewOnlyDashboard();
         }
 
@@ -4481,9 +4675,9 @@
                 const btn = document.getElementById('view-tab-' + t);
                 if (!btn) return;
                 if (t === viewOnlyCurrentTab) {
-                    btn.className = 'view-tab-btn px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-bold rounded-xl tab-active whitespace-nowrap';
+                    btn.className = 'view-tab-btn view-tab-active px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-bold rounded-xl whitespace-nowrap';
                 } else {
-                    btn.className = 'view-tab-btn px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-bold rounded-xl text-muted-custom whitespace-nowrap';
+                    btn.className = 'view-tab-btn view-tab-inactive px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-bold rounded-xl whitespace-nowrap';
                 }
             });
 
@@ -4705,6 +4899,8 @@
 
         // Always runs, regardless of whether Cloud Sync above succeeded.
         render();
+        updateMobileNavActiveState(currentTab);
+        renderMobileTimersSegment();
         initAuth();
     </script>
 <script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a22571e27990d5ee',t:'MTc4NTI1ODA3Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>
@@ -4719,5 +4915,5 @@
             }
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a22896b9893887fe',t:'MTc4NTI5MTA0Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a22b7617b80c7c72',t:'MTc4NTMyMTE2Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
